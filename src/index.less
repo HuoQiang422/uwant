@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+	-moz-box-sizing: border-box !important; /*Firefox3.5+*/
+	-webkit-box-sizing: border-box !important; /*Safari3.2+*/
+	-o-box-sizing: border-box !important; /*Opera9.6*/
+	-ms-box-sizing: border-box !important; /*IE8*/
+	box-sizing: border-box !important; /*W3C标准(IE9+，Safari5.1+,Chrome10.0+,Opera10.6+都符合box-sizing的w3c标准语法)*/
+	-webkit-user-drag: none !important;
+}
+
+p {
+	margin: 0;
+}
+
+body {
+	font-size: 14px;
+	margin: 0;
+}
+
+body {
+	margin: 0;
+	overflow: overlay;
+}
+
+/* 隐藏进度条 */
+#nprogress .bar {
+	display: none; /* 或者使用 visibility: hidden; */
+}

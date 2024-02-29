@@ -1,0 +1,31 @@
+.root-container {
+	width: 100vw;
+	height: 100vh;
+	overflow: auto;
+}
+
+.back-img-set {
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: cover;
+}
+
+.all-white {
+	* {
+		color: #ffffff !important;
+	}
+
+	img {
+		overflow: hidden; // 超出部分隐藏
+		filter: drop-shadow(#fff 100px 0); // 在右侧 100px 加一个 #FFF 的阴影
+		transform: translateX(
+			-100px
+		); // 整体向左偏移 100px 原本的元素超出边界不显示。实现效果：本来的位置被白色阴影替换。
+	}
+}
+
+.all-black {
+	* {
+		color: #000000 !important;
+	}
+}
