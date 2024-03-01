@@ -1,6 +1,6 @@
 import { Button } from "antd";
 import { useSelector } from "react-redux";
-import { MenuRedux } from "../redux/menu";
+import { MenuRedux } from "../../redux/menu";
 
 interface ButtonPermissionProps {
 	permissionKey?: string | string[];

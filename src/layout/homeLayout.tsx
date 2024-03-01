@@ -1,21 +1,17 @@
 import { Layout, Menu, Skeleton } from "antd";
 import Sider from "antd/es/layout/Sider";
 import { Content, Header } from "antd/es/layout/layout";
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useUpdateEffect, useWindowSize } from "react-use";
-import ContainerCard from "../components/common/containerCard";
-import FloatArea from "../components/common/floatArea";
-import MyMacScrollbar from "../components/common/myMacScrollbar";
 import HeaderLeft from "../components/layout/headerLeft";
 import HeaderRight from "../components/layout/headerRight";
 import KeepLiveTabs from "../components/layout/keepLiveTabs";
-import {
-	SHOW_CACHE_TABS,
-	SIDER_WIDTH,
-	THEME_COLOR
-} from "../config/settings";
+import ContainerCard from "../components/public/containerCard";
+import FloatArea from "../components/public/floatArea";
+import MyMacScrollbar from "../components/public/myMacScrollbar";
+import { SHOW_CACHE_TABS, SIDER_WIDTH, THEME_COLOR } from "../config/settings";
 import { ControllerProps, setSiderOpenState } from "../redux/controller";
 import { MenuRedux } from "../redux/menu";
 import {
@@ -36,6 +32,7 @@ export default function HomeLayout() {
 	const location = useLocation();
 	const currentKey = findMenuOpenKeys(items, location.pathname);
 	const { width } = useWindowSize();
+	const [lastWidth, setLastWidth] = useState(window.innerWidth + 1);
 
 	//调整antv的宽度
 	useUpdateEffect(() => {
@@ -43,12 +40,25 @@ export default function HomeLayout() {
 		window.dispatchEvent(e);
 	}, [siderOpen]);
 
-	useUpdateEffect(() => {
-		if (width > 768) {
-			dispatch(setSiderOpenState(true));
-		} else {
-			dispatch(setSiderOpenState(false));
+	//优化控制sider的展开和收缩
+	useEffect(() => {
+		if (!localStorage.getItem("siderOpen")) {
+			if (width >= 768) {
+				dispatch(setSiderOpenState(true));
+			} else {
+				dispatch(setSiderOpenState(false));
+			}
 		}
+		if (width < lastWidth) {
+			if (width < 768) dispatch(setSiderOpenState(false));
+		} else {
+			if (width >= 768) {
+				if (localStorage.getItem("siderOpen") === "true") {
+					dispatch(setSiderOpenState(true));
+				}
+			}
+		}
+		setLastWidth(width);
 	}, [width]);
 
 	return (

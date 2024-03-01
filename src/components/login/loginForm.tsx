@@ -11,7 +11,7 @@ import { LOGIN_BOX_TITLE, LOGO, LOGO_TEXT } from "../../config/staticInfo";
 import { setName, setToken, setUsername } from "../../redux/user";
 import { enterLoading, leaveLoading } from "../../utils/controllerUtils";
 import { post } from "../../utils/request";
-import MyForm from "../common/myForm";
+import MyForm from "../public/myForm";
 
 export default function LoginForm() {
 	const navigator = useNavigate();

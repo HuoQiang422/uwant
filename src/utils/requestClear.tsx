@@ -1,15 +1,24 @@
 import axios from "axios";
-import { message } from "../components/common/myMessage";
-import { abortController, newAbortController } from "../controller/signal";
+import { message } from "../components/public/myMessage";
+import {
+	abortController,
+	newAbortController,
+} from "../components/public/signal";
 
 interface RequestParams {
 	url: string;
 	data?: object | FormData;
 	token?: string;
+	responseType?: "blob" | "arraybuffer" | "json" | "text";
 }
 
 // 统一的请求函数
-const request = async (url: string, config: any, token?: string) => {
+const request = async (
+	url: string,
+	config: any,
+	token?: string,
+	responseType?: string
+) => {
 	try {
 		// 添加 Authorization 请求头，携带 token
 		if (token) {
@@ -20,6 +29,7 @@ const request = async (url: string, config: any, token?: string) => {
 		}
 
 		config.signal = abortController.signal;
+		if (responseType) config.responseType = responseType;
 
 		const res = await axios(url, config);
 		const contentType = res.headers["content-type"]; // 获取Content-Type头部
@@ -31,7 +41,7 @@ const request = async (url: string, config: any, token?: string) => {
 		//如果token失效
 		if (res.data.code === 401) {
 			message.error(res.data.message);
-			localStorage.clear()
+			localStorage.clear();
 			await abortController.abort();
 			newAbortController();
 			setTimeout(() => {
@@ -44,7 +54,7 @@ const request = async (url: string, config: any, token?: string) => {
 			contentType.includes("application/json") ||
 			contentType.includes("text/plain")
 		) {
-			if (res.data && res.data.code && res.data.code !== 200) {
+			if (res.data.code !== 200) {
 				if (res.data.msg || res.data.message) {
 					throw res.data.msg || res.data.message;
 				}
@@ -61,7 +71,7 @@ const request = async (url: string, config: any, token?: string) => {
 
 //GET请求函数
 export const getClear = (props: RequestParams) => {
-	const { url, data, token } = props;
+	const { url, data, token, responseType } = props;
 	let queryString = "";
 	if (data) {
 		queryString = Object.entries(data)
@@ -77,19 +87,21 @@ export const getClear = (props: RequestParams) => {
 			data: data,
 			method: "GET",
 		},
-		token
+		token,
+		responseType
 	);
 };
 
 //POST请求函数
 export const postClear = (props: RequestParams) => {
-	const { url, data, token } = props;
+	const { url, data, token, responseType } = props;
 	return request(
 		url,
 		{
 			data: data,
 			method: "POST",
 		},
-		token
+		token,
+		responseType
 	);
 };

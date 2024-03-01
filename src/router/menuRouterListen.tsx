@@ -24,11 +24,15 @@ export default function menuRouterListen() {
 	async function getMenu() {
 		let res: any;
 		if (GET_MENU_FROM_SERVER) {
-			const result = await post({
-				url: API_LOGIN_USERMENU,
-				token,
-			});
-			res = result.content;
+			try {
+				const result = await post({
+					url: API_LOGIN_USERMENU,
+					token,
+				});
+				res = result.content;
+			} catch (error) {
+				console.log(error);
+			}
 		} else {
 			res = siderDatabase;
 		}
@@ -43,11 +47,15 @@ export default function menuRouterListen() {
 	) {
 		let res: any;
 		if (GET_MENU_FROM_SERVER) {
-			const result = await post({
-				url: API_LOGIN_USERROUTER,
-				token,
-			});
-			res = result.content;
+			try {
+				const result = await post({
+					url: API_LOGIN_USERROUTER,
+					token,
+				});
+				res = result.content;
+			} catch (error) {
+				console.log(error);
+			}
 		} else {
 			res = menuDatabase;
 		}

@@ -63,16 +63,20 @@ export function transDataForTree(data: any[], key: string = "id") {
 }
 
 //根据name、status和id生成label、disabled和value
-export function transDataForSelect(data: any[], key: string = "id") {
+export function transDataForSelect(
+	data: any[],
+	key: string = "id",
+	labelKey: string = "name"
+) {
 	return data.map((item: any) => {
 		const newItem: any = {
-			label: item.name,
+			label: item[labelKey],
 			disabled: item.status === 0,
 			value: item[key],
 		};
 
 		if (item.children && item.children.length > 0) {
-			newItem.children = transDataForSelect(item.children, key);
+			newItem.children = transDataForSelect(item.children, key, labelKey);
 		}
 
 		return newItem;

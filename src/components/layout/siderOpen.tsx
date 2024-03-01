@@ -1,10 +1,7 @@
 import { MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
 import { Button } from "antd";
 import { useDispatch, useSelector } from "react-redux";
-import {
-	ControllerProps,
-	setSiderOpenState
-} from "../../redux/controller";
+import { ControllerProps, setSiderOpenState } from "../../redux/controller";
 
 export default function SiderOpen() {
 	const dispatch = useDispatch();
@@ -19,6 +16,7 @@ export default function SiderOpen() {
 				className="flex gap-3 px-2 h-10 items-center text-xl "
 				onClick={() => {
 					dispatch(setSiderOpenState(!siderOpen));
+					localStorage.setItem("siderOpen", `${!siderOpen}`);
 				}}
 			>
 				{siderOpen ? <MenuFoldOutlined /> : <MenuUnfoldOutlined />}

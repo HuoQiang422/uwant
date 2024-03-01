@@ -9,6 +9,7 @@ import { Breadcrumb } from "antd";
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { Link, useLocation } from "react-router-dom";
+import { useWindowSize } from "react-use";
 import { MenuRedux } from "../../redux/menu";
 import { findMenuItemById, findMenuOpenKeys } from "../../utils/findMenu";
 
@@ -24,6 +25,7 @@ export default function BreadcrumbNavigation(props: BreadcrumbNavigationProps) {
 	const databaseMenu = useSelector(
 		(state: { menuRedux: MenuRedux }) => state.menuRedux.databaseMenu
 	);
+	const { width } = useWindowSize();
 
 	useEffect(() => {
 		generateBreadcrumb();
@@ -50,16 +52,22 @@ export default function BreadcrumbNavigation(props: BreadcrumbNavigationProps) {
 
 	return (
 		<>
-			<Breadcrumb
-				items={[
-					{
-						title: <HomeFilled />,
-					},
-					...breadcrumbItems,
-				]}
-				className={className}
-				style={{ ...style }}
-			/>
+			{width >= 768 ? (
+				<Breadcrumb
+					items={[
+						{
+							title: (
+								<Link to={"/"}>
+									<HomeFilled />
+								</Link>
+							),
+						},
+						...breadcrumbItems,
+					]}
+					className={`${className}`}
+					style={{ ...style }}
+				/>
+			) : null}
 		</>
 	);
 }

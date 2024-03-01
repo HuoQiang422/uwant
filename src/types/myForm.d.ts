@@ -25,6 +25,8 @@ interface SelectFieldConfig extends CommonFieldProps {
 	placeholder?: string;
 	selectOptions?: DefaultOptionType[];
 	optionRender?: (option: DefaultOptionType) => React.ReactNode;
+	onDropdownVisibleChange?: () => void;
+	loading?: boolean;
 }
 
 interface InputNumberConfig extends CommonFieldProps {
@@ -58,6 +60,8 @@ interface LabelConfig<T extends CommonFieldProps> {
 	label: string;
 	link?: string;
 	linkText?: string;
+	componentType?: "div" | "tag";
+	tagIcon?: React.ReactNode;
 }
 
 interface TreeSelectConfig extends CommonFieldProps {
@@ -80,6 +84,12 @@ interface RadioGroupConfig extends CommonFieldProps {
 	}[];
 }
 
+interface SwitchConfig extends CommonFieldProps {
+	type: "switch";
+	checkedText?: string;
+	uncheckedText?: string;
+}
+
 interface TextAreaConfig extends CommonFieldProps {
 	type: "textArea";
 	rows?: number;
@@ -98,6 +108,7 @@ interface UploadConfig extends CommonFieldProps {
 	uploadButtonIcon?: React.ReactNode;
 	accept?: string;
 	maxCount?: number;
+	templateFileUrl?: string;
 }
 
 export interface MyFormProps<T extends CommonFieldProps = CommonFieldProps> {
@@ -115,7 +126,7 @@ export interface MyFormProps<T extends CommonFieldProps = CommonFieldProps> {
 	initialValues?: Store;
 	onValuesChange?: (e: any, form: FormInstance) => void;
 	childStyle?: React.CSSProperties;
-	footerStyle?: "end" | "center" | "start";
+	footerStyle?: "end" | "center" | "start" | "between" | "around" | "evenly";
 	footerButtonStyle?: "full" | React.CSSProperties;
 	footerDirection?: "horizontal" | "vertical";
 	showOk?: boolean;
@@ -128,4 +139,6 @@ export interface MyFormProps<T extends CommonFieldProps = CommonFieldProps> {
 	disabled?: boolean;
 	className?: string;
 	autoValidRules?: boolean;
+	labelWidth?: number;
+	extra?: React.ReactNode;
 }

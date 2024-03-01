@@ -3,10 +3,10 @@ import { GetRowKey, Key } from "antd/es/table/interface";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { useUpdateEffect } from "react-use";
-import { MenuRedux } from "../redux/menu";
-import { User } from "../redux/user";
-import { enterLoading, leaveLoading } from "../utils/controllerUtils";
-import { get, post } from "../utils/request";
+import { MenuRedux } from "../../redux/menu";
+import { User } from "../../redux/user";
+import { enterLoading, leaveLoading } from "../../utils/controllerUtils";
+import { get, post } from "../../utils/request";
 import { abort } from "./signal";
 import TableFix from "./tableFix";
 
@@ -21,7 +21,7 @@ interface MyTableProps {
 	selectType?: "object" | "string";
 	multiPermissionKey?: string | string[];
 	searchParams?: object;
-	method?: "POST" | "GET";
+	method?: "POST" | "GET" | "get" | "post";
 	data?: any[];
 	onChange?: (page: number, pageSize: any) => void;
 	showPagination?: boolean;

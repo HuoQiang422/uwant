@@ -8,6 +8,7 @@ interface ContainerCardProps {
 	className?: string;
 	style?: React.CSSProperties;
 }
+
 export default function ContainerCard(props: ContainerCardProps) {
 	const { children, className, style } = props;
 	const location = useLocation();
@@ -17,7 +18,7 @@ export default function ContainerCard(props: ContainerCardProps) {
 			className={`${
 				HOME_HAS_BG
 					? "flex flex-col bg-white p-3 rounded-md border"
-					: location.pathname === homeUrl
+					: location.pathname === homeUrl || location.pathname === "/"
 					? ""
 					: "flex flex-col bg-white p-3 rounded-md border"
 			} ${className}`}

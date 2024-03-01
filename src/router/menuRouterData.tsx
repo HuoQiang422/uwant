@@ -26,6 +26,18 @@ export const siderDatabase: DatabaseMenu[] = [
 		status: 1,
 		icon: "FileWordOutlined",
 	},
+	{
+		id: 3,
+		permissionId: "3",
+		name: "配置中心",
+		url: "/settings",
+		perms: "settings",
+		parentId: 0,
+		type: 1,
+		orderNum: 0,
+		status: 1,
+		icon: "SettingOutlined",
+	},
 ];
 
 //路由数据

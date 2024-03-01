@@ -11,12 +11,14 @@ import {
 	Select,
 	Space,
 	Spin,
+	Switch,
+	Tag,
 	TreeSelect,
 	Upload,
 	UploadFile,
 } from "antd";
 import TextArea from "antd/es/input/TextArea";
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { MenuRedux } from "../../redux/menu";
@@ -29,6 +31,7 @@ import {
 	RadioGroupConfig,
 	RangePickerConfig,
 	SelectFieldConfig,
+	SwitchConfig,
 	TextAreaConfig,
 	TreeSelectConfig,
 	UploadConfig,
@@ -50,6 +53,7 @@ export default function MyForm(
 		| TextAreaConfig
 		| RangePickerConfig
 		| UploadConfig
+		| SwitchConfig
 	>
 ) {
 	const {
@@ -78,6 +82,8 @@ export default function MyForm(
 		disabled,
 		className,
 		autoValidRules,
+		labelWidth = 82,
+		extra,
 	} = props;
 	const [myForm] = Form.useForm();
 	const navigator = useNavigate();
@@ -86,6 +92,24 @@ export default function MyForm(
 	);
 	const [pictureShow, setPictureShow] = useState<boolean>(false);
 	const [pictureShowSrc, setPictureShowSrc] = useState<string>("");
+
+	const footerButtonStyleShow = {
+		width: "100%",
+		justifyContent:
+			footerStyle === "end"
+				? "flex-end"
+				: footerStyle === "start"
+				? "flex-start"
+				: footerStyle === "center"
+				? "center"
+				: footerStyle === "between"
+				? "space-between"
+				: footerStyle === "around"
+				? "space-around"
+				: footerStyle === "evenly"
+				? "space-evenly"
+				: undefined,
+	};
 
 	const showItem = (
 		childItem:
@@ -98,6 +122,7 @@ export default function MyForm(
 			| TextAreaConfig
 			| RangePickerConfig
 			| UploadConfig
+			| SwitchConfig
 	) => {
 		return (
 			<Form.Item
@@ -131,6 +156,7 @@ export default function MyForm(
 			| TextAreaConfig
 			| RangePickerConfig
 			| UploadConfig
+			| SwitchConfig
 	) {
 		switch (item.type) {
 			case "input":
@@ -166,6 +192,29 @@ export default function MyForm(
 						optionRender={item.optionRender}
 						style={{ ...item.style, ...childStyle }}
 						className={item.className}
+						onDropdownVisibleChange={(e) => {
+							if (e) {
+								if (item.onDropdownVisibleChange) {
+									item.onDropdownVisibleChange();
+								}
+							}
+						}}
+						dropdownRender={(menu) => {
+							return (
+								<>
+									{!item.loading ? menu : null}
+									{item.loading ? (
+										<Flex
+											justify="center"
+											align="center"
+											style={{ padding: "24px" }}
+										>
+											<Spin />
+										</Flex>
+									) : null}
+								</>
+							);
+						}}
 					/>
 				);
 			case "inputNumber":
@@ -193,7 +242,7 @@ export default function MyForm(
 						onDropdownVisibleChange={(e) => {
 							if (e) {
 								if (item.onDropdownVisibleChange) {
-									item.onDropdownVisibleChange;
+									item.onDropdownVisibleChange();
 								}
 							}
 						}}
@@ -273,6 +322,7 @@ export default function MyForm(
 			case "upload":
 				return (
 					<Upload
+						className="w-full"
 						beforeUpload={() => {
 							return false;
 						}}
@@ -289,9 +339,11 @@ export default function MyForm(
 						}
 						onPreview={async (e: UploadFile<any>) => {
 							if (e) {
-								const fileSrc = await getBase64(e.originFileObj);
-								setPictureShow(true);
-								setPictureShowSrc(fileSrc);
+								if (item.uploadButtonType === "image") {
+									const fileSrc = await getBase64(e.originFileObj);
+									setPictureShow(true);
+									setPictureShowSrc(fileSrc);
+								}
 							}
 						}}
 					>
@@ -308,6 +360,13 @@ export default function MyForm(
 							</Button>
 						)}
 					</Upload>
+				);
+			case "switch":
+				return (
+					<Switch
+						checkedChildren={item.checkedText}
+						unCheckedChildren={item.uncheckedText}
+					/>
 				);
 			default:
 				return null;
@@ -334,11 +393,8 @@ export default function MyForm(
 					</Flex>
 				);
 			} else if (item.type === "label") {
-				return (
-					<div
-						key={`label-${index}`}
-						className="flex items-center justify-between pb-2"
-					>
+				const children: React.ReactNode = (
+					<div className="flex w-full items-center justify-between">
 						<p className="m-0">{item.label}</p>
 						<div className="text-sm">
 							{item.link ? (
@@ -352,6 +408,19 @@ export default function MyForm(
 								</a>
 							) : null}
 						</div>
+					</div>
+				);
+				return item.componentType && item.componentType === "tag" ? (
+					<Tag
+						icon={item.tagIcon}
+						key={`label-${index}`}
+						className="flex w-full px-4 py-1 mb-2"
+					>
+						{children}
+					</Tag>
+				) : (
+					<div key={`label-${index}`} className="mb-2">
+						{children}
 					</div>
 				);
 			} else if (item.type === "component") {
@@ -376,7 +445,7 @@ export default function MyForm(
 						form={form ? form : myForm}
 						name={name}
 						disabled={disabled}
-						labelCol={{ flex: "82px" }}
+						labelCol={{ flex: `${labelWidth}px` }}
 						initialValues={initialValues}
 						onFinish={(e) => {
 							if (onFinish) onFinish(removeEmptyValues(e));
@@ -390,54 +459,52 @@ export default function MyForm(
 						className={className}
 					>
 						{showFields}
-						{!showCancel && !showOk ? null : (
+						{!showCancel && !showOk && !extra ? null : (
 							<Space
+								wrap
 								direction={footerDirection}
-								style={{
-									width: "100%",
-									justifyContent:
-										footerStyle === "end"
-											? "flex-end"
-											: footerStyle === "start"
-											? "flex-start"
-											: footerStyle === "center"
-											? "center"
-											: undefined,
-								}}
+								style={footerButtonStyleShow}
 							>
-								{showCancel ? (
-									<Button
-										loading={cancelLoading}
-										onClick={onCancel}
-										className={
-											footerButtonStyle === "full" ? "w-full" : undefined
-										}
-										style={
-											footerButtonStyle !== "full"
-												? footerButtonStyle
-												: undefined
-										}
-									>
-										{cancelText}
-									</Button>
-								) : null}
-								{showOk ? (
-									<Button
-										type="primary"
-										htmlType="submit"
-										loading={okLoading}
-										className={
-											footerButtonStyle === "full" ? "w-full" : undefined
-										}
-										style={
-											footerButtonStyle !== "full"
-												? footerButtonStyle
-												: undefined
-										}
-									>
-										{okText}
-									</Button>
-								) : null}
+								{extra ? extra : null}
+								<Space
+									wrap
+									direction={footerDirection}
+									style={footerButtonStyleShow}
+								>
+									{showCancel ? (
+										<Button
+											loading={cancelLoading}
+											onClick={onCancel}
+											className={
+												footerButtonStyle === "full" ? "w-full" : undefined
+											}
+											style={
+												footerButtonStyle !== "full"
+													? footerButtonStyle
+													: undefined
+											}
+										>
+											{cancelText}
+										</Button>
+									) : null}
+									{showOk ? (
+										<Button
+											type="primary"
+											htmlType="submit"
+											loading={okLoading}
+											className={
+												footerButtonStyle === "full" ? "w-full" : undefined
+											}
+											style={
+												footerButtonStyle !== "full"
+													? footerButtonStyle
+													: undefined
+											}
+										>
+											{okText}
+										</Button>
+									) : null}
+								</Space>
 							</Space>
 						)}
 					</Form>

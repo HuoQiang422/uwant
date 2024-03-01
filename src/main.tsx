@@ -7,7 +7,7 @@ import zhCN from "antd/locale/zh_CN";
 import ReactDOM from "react-dom/client";
 import { Provider } from "react-redux";
 import { BrowserRouter } from "react-router-dom";
-import MyMessage from "./components/common/myMessage";
+import MyMessage from "./components/public/myMessage";
 import { THEME_COLOR } from "./config/settings";
 import "./index.less";
 //redux全局状态管理

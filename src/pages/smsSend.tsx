@@ -1,10 +1,10 @@
 import { Button, Space, TableColumnsType, Tag } from "antd";
 import { useState } from "react";
 import { useSelector } from "react-redux";
-import { TimeTag } from "../components/common/myTag";
-import TableSearchBar from "../components/common/tableSearchBar";
-import { API_SMS_LIST, API_SMS_SEND } from "../config/api";
-import MyTable from "../controller/myTable";
+import MyTable from "../components/public/myTable";
+import { TimeTag } from "../components/public/myTag";
+import TableSearchBar from "../components/public/tableSearchBar";
+import { API_SMS_EXPORT, API_SMS_LIST, API_SMS_SEND } from "../config/api";
 import { User } from "../redux/user";
 import { enterLoading, leaveLoading } from "../utils/controllerUtils";
 import { post } from "../utils/request";
@@ -18,11 +18,18 @@ export default function SmsSend() {
 
 	const columns: TableColumnsType<any> = [
 		{
+			title: "session-id",
+			width: 240,
+			dataIndex: "sessionId",
+			key: "sessionId",
+			fixed: "left",
+			render: (text) => (text ? text : "-"),
+		},
+		{
 			title: "手机号",
 			width: 160,
 			dataIndex: "mobile",
 			key: "mobile",
-			fixed: "left",
 			render: (text) => (text ? text : "-"),
 		},
 		{
@@ -33,18 +40,29 @@ export default function SmsSend() {
 			render: (text) => (text ? text : "-"),
 		},
 		{
+			title: "挂机时间",
+			width: 200,
+			dataIndex: "handUpTime",
+			key: "handUpTime",
+			render: (text) => <TimeTag text={text} />,
+		},
+		{
+			title: "短信送达结果",
+			width: 160,
+			dataIndex: "state",
+			key: "state",
+			render: (text) => (
+				<Tag color={text === "已发送" ? "green" : "blue"}>
+					{text ? text : "-"}
+				</Tag>
+			),
+		},
+		{
 			title: "发送时间",
 			width: 200,
 			dataIndex: "sendDate",
 			key: "sendDate",
 			render: (text) => <TimeTag text={text} />,
-		},
-		{
-			title: "状态",
-			width: 160,
-			dataIndex: "state",
-			key: "state",
-			render: (text) => <Tag color="blue">{text ? text : "-"}</Tag>,
 		},
 		{
 			title: "操作",
@@ -100,13 +118,25 @@ export default function SmsSend() {
 						name: "content",
 					},
 					{
-						type: "input",
+						type: "select",
 						placeholder: "状态",
+						selectOptions: [
+							{
+								label: "已发送",
+								value: "已发送",
+							},
+							{
+								label: "未发送",
+								value: "未发送",
+							},
+						],
 						name: "state",
 					},
 				]}
 				onFinish={setSearchParams}
 				rows={1}
+				showExport
+				exportRequestUrl={API_SMS_EXPORT}
 			/>
 			<MyTable
 				tableKey={tableKey}

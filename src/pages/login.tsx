@@ -2,8 +2,8 @@ import { animated, useSpring } from "@react-spring/web";
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useUpdateEffect } from "react-use";
-import MyMacScrollbar from "../components/common/myMacScrollbar";
 import LoginForm from "../components/login/loginForm";
+import MyMacScrollbar from "../components/public/myMacScrollbar";
 import { LOGIN_FOOTER_TEXT } from "../config/staticInfo";
 
 export default function Login() {

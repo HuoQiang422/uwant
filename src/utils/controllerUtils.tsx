@@ -1,4 +1,4 @@
-import { message } from "../components/common/myMessage";
+import { message } from "../components/public/myMessage";
 import { API_URL } from "../config/api";
 import { isURL } from "./transformData";
 

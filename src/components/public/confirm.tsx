@@ -1,5 +1,5 @@
 import { Popconfirm } from "antd";
-import ButtonPermission from "../../controller/buttonPermission";
+import ButtonPermission from "./buttonPermission";
 
 interface ConfirmProps {
 	buttonText: string;

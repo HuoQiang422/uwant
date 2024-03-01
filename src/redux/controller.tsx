@@ -5,12 +5,13 @@ export type ControllerProps = {
 };
 
 const defaultValues: ControllerProps = {
-	siderOpen:
-		localStorage.getItem("siderOpen") === "true"
+	siderOpen: localStorage.getItem("siderOpen")
+		? localStorage.getItem("siderOpen") === "true"
 			? true
-			: window.innerWidth > 768
-			? true
-			: false,
+			: false
+		: window.innerWidth >= 768
+		? true
+		: false,
 };
 
 const controller = createSlice({

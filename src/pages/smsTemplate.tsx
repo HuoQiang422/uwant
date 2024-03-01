@@ -1,17 +1,17 @@
 import { Button, Modal, Space, Switch, TableColumnsType } from "antd";
 import { useState } from "react";
 import { useSelector } from "react-redux";
-import Confirm from "../components/common/confirm";
-import { TimeTag } from "../components/common/myTag";
-import PageHeaderSpace from "../components/common/pageHeaderSpace";
-import TableSearchBar from "../components/common/tableSearchBar";
+import Confirm from "../components/public/confirm";
+import MyTable from "../components/public/myTable";
+import { TimeTag } from "../components/public/myTag";
+import PageHeaderSpace from "../components/public/pageHeaderSpace";
+import TableSearchBar from "../components/public/tableSearchBar";
 import AddOrEditSmsTemplate from "../components/smsTemplate/addOrEditSmsTemplate";
 import {
 	API_SMS_TEMPLATE_DELETE,
 	API_SMS_TEMPLATE_LIST,
 	API_SMS_TEMPLATE_OPERATE,
 } from "../config/api";
-import MyTable from "../controller/myTable";
 import { User } from "../redux/user";
 import { enterLoading, leaveLoading } from "../utils/controllerUtils";
 import { post } from "../utils/request";
@@ -31,6 +31,7 @@ export default function SmsTemplate() {
 	}
 
 	function closeModal() {
+		setHandleItem(null);
 		setModalOpen(false);
 	}
 
@@ -45,21 +46,10 @@ export default function SmsTemplate() {
 		},
 		{
 			title: "模版内容",
-			width: 300,
+			width: 280,
 			dataIndex: "text",
 			key: "text",
 			render: (text) => (text ? text : "-"),
-		},
-		{
-			title: "链接",
-			width: 200,
-			dataIndex: "url",
-			key: "url",
-			render: (text) => (
-				<a href={text} target="_blank">
-					{text ? text : "-"}
-				</a>
-			),
 		},
 		{
 			title: "更新时间",
@@ -75,13 +65,12 @@ export default function SmsTemplate() {
 			key: "state",
 			render: (text, record) => (
 				<Switch
+					checked={text === "启用"}
 					checkedChildren="启用"
 					unCheckedChildren="禁用"
-					defaultChecked={text === "0"}
-					disabled={loadings[`checked-${record.id}` as any]}
-					loading={loadings[`checked-${record.id}` as any]}
-					onClick={(e) => {
-						changeTemplateState(record.id, e ? "0" : "1");
+					loading={loadings[`state-${record.id}` as any]}
+					onChange={(e) => {
+						changeTemplateStatus(e, record.id);
 					}}
 				/>
 			),
@@ -89,7 +78,7 @@ export default function SmsTemplate() {
 		{
 			title: "操作",
 			fixed: "right",
-			width: 120,
+			width: 160,
 			render: (_, record) => (
 				<Space size="middle">
 					<Button
@@ -134,12 +123,15 @@ export default function SmsTemplate() {
 			});
 	}
 
-	function changeTemplateState(id: string, state: string) {
-		enterLoading(`checked-${id}`, setLoadings);
+	function changeTemplateStatus(e: boolean, id: string) {
+		enterLoading(`state-${id}`, setLoadings);
 		post({
 			url: API_SMS_TEMPLATE_OPERATE,
 			token,
-			data: transformJsonToFormData({ id, state }),
+			data: transformJsonToFormData({
+				id,
+				state: e === true ? "启用" : "禁用",
+			}),
 		})
 			.then((res) => {
 				if (res) {
@@ -147,7 +139,7 @@ export default function SmsTemplate() {
 				}
 			})
 			.finally(() => {
-				leaveLoading(`checked-${id}`, setLoadings);
+				leaveLoading(`status-${id}`, setLoadings);
 			});
 	}
 
@@ -197,9 +189,17 @@ export default function SmsTemplate() {
 				}
 				centered
 				onCancel={closeModal}
-				footer={false}
+				footer={null}
+				destroyOnClose
 			>
-				<AddOrEditSmsTemplate />
+				<AddOrEditSmsTemplate
+					modalType={modalType}
+					handleItem={handleItem}
+					closeModal={closeModal}
+					reFresh={() => {
+						setTableKey(Math.random());
+					}}
+				/>
 			</Modal>
 		</>
 	);

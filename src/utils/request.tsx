@@ -1,20 +1,29 @@
 import axios from "axios";
 import nProgress from "nprogress";
 import "nprogress/nprogress.css";
-import { message } from "../components/common/myMessage";
+import { message } from "../components/public/myMessage";
+import {
+	abortController,
+	newAbortController,
+} from "../components/public/signal";
 import { errMsgMapping, warningMsgMapping } from "../config/errMsg";
-import { abortController, newAbortController } from "../controller/signal";
 
 export interface RequestParams {
 	url: string;
 	data?: object | FormData;
 	token?: string;
+	responseType?: "blob" | "arraybuffer" | "json" | "text";
 }
 
 let messageOpen: boolean = true;
 
 // 统一的请求函数
-const request = async (url: string, config: any, token?: string) => {
+const request = async (
+	url: string,
+	config: any,
+	token?: string,
+	responseType?: string
+) => {
 	try {
 		// 添加 Authorization 请求头，携带 token
 		if (token) {
@@ -25,6 +34,7 @@ const request = async (url: string, config: any, token?: string) => {
 		}
 
 		config.signal = abortController.signal;
+		if (responseType) config.responseType = responseType;
 
 		const res = await axios(url, config);
 		const contentType = res.headers["content-type"]; // 获取Content-Type头部
@@ -32,7 +42,7 @@ const request = async (url: string, config: any, token?: string) => {
 		//如果token失效
 		if (res.data.code === 401) {
 			message.error(res.data.message);
-			localStorage.clear()
+			localStorage.clear();
 			await abortController.abort();
 			newAbortController();
 			nProgress.done();
@@ -52,16 +62,20 @@ const request = async (url: string, config: any, token?: string) => {
 						? res.data.content
 						: res.data.msg ||
 						  res.data.message ||
-						  res.data.errorMessge ||
+						  res.data.errorMessage ||
 						  res.data.errorMsg;
 
-				if (res.data.code && res.data.code !== 200) {
+				if (res.data.code !== 200) {
 					if (errorMessage) {
 						message.error(errorMessage);
 					}
 					throw errorMessage;
-				} else if (res.data.code && res.data.code === 200) {
-					if (errorMessage !== "成功" && errorMessage !== "失败") {
+				} else if (res.data.code === 200) {
+					if (
+						errorMessage &&
+						errorMessage !== "成功" &&
+						errorMessage !== "失败"
+					) {
 						message.success(errorMessage);
 					}
 				}
@@ -100,7 +114,7 @@ const request = async (url: string, config: any, token?: string) => {
 //GET请求函数
 export const get = (props: RequestParams) => {
 	nProgress.start();
-	const { url, data, token } = props;
+	const { url, data, token, responseType } = props;
 	let queryString = "";
 	if (data) {
 		queryString = Object.entries(data)
@@ -116,20 +130,22 @@ export const get = (props: RequestParams) => {
 			data: data,
 			method: "GET",
 		},
-		token
+		token,
+		responseType
 	);
 };
 
 //POST请求函数
 export const post = (props: RequestParams) => {
 	nProgress.start();
-	const { url, data, token } = props;
+	const { url, data, token, responseType } = props;
 	return request(
 		url,
 		{
 			data: data,
 			method: "POST",
 		},
-		token
+		token,
+		responseType
 	);
 };

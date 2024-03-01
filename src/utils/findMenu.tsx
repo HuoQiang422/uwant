@@ -1,4 +1,4 @@
-import { iconList } from "../components/common/iconList";
+import { iconList } from "../components/public/iconList";
 
 //通过id寻找对象
 export function findMenuItemById(items: any, id: string | number): any {
