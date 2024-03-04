@@ -1,4 +1,5 @@
 import axios from "axios";
+import { debounce } from "lodash";
 import nProgress from "nprogress";
 import "nprogress/nprogress.css";
 import { message } from "../components/public/myMessage";
@@ -15,7 +16,24 @@ export interface RequestParams {
 	responseType?: "blob" | "arraybuffer" | "json" | "text";
 }
 
-let messageOpen: boolean = true;
+const alertedMsgs = new Set();
+let timerId: any;
+
+//防抖消息提示
+const requestMsg = debounce(
+	(msg: string, type: "success" | "error" | "warning") => {
+		if (alertedMsgs.has(msg)) {
+			return;
+		}
+		message[type](msg);
+		alertedMsgs.add(msg);
+		clearTimeout(timerId);
+		timerId = setTimeout(() => {
+			alertedMsgs.clear();
+		}, 200); // 设置一个合适的时间，比如 2 秒
+	},
+	200
+);
 
 // 统一的请求函数
 const request = async (
@@ -37,11 +55,25 @@ const request = async (
 		if (responseType) config.responseType = responseType;
 
 		const res = await axios(url, config);
+
 		const contentType = res.headers["content-type"]; // 获取Content-Type头部
 
+		//获取code值
+		const code = res.data.code || res.data.errorCode;
+
+		//获取消息提示
+		const msg =
+			typeof res.data.content === "string" && res.data.content.trim() !== ""
+				? res.data.content
+				: res.data.msg ||
+				  res.data.message ||
+				  res.data.errorMessage ||
+				  res.data.errorMessge ||
+				  res.data.errorMsg;
+
 		//如果token失效
-		if (res.data.code === 401) {
-			message.error(res.data.message);
+		if (code === 401) {
+			message.error(msg);
 			localStorage.clear();
 			await abortController.abort();
 			newAbortController();
@@ -52,61 +84,45 @@ const request = async (
 			return;
 		}
 
+		//处理json、text类型的数据
 		if (
 			contentType.includes("application/json") ||
 			contentType.includes("text/plain")
 		) {
 			if (res.data) {
-				const errorMessage =
-					typeof res.data.content === "string" && res.data.content.trim() !== ""
-						? res.data.content
-						: res.data.msg ||
-						  res.data.message ||
-						  res.data.errorMessage ||
-						  res.data.errorMsg;
-
-				if (res.data.code !== 200) {
-					if (errorMessage) {
-						message.error(errorMessage);
+				if (code === 200) {
+					if (msg && msg !== "成功" && msg !== "失败") {
+						requestMsg(msg, "success");
 					}
-					throw errorMessage;
-				} else if (res.data.code === 200) {
-					if (
-						errorMessage &&
-						errorMessage !== "成功" &&
-						errorMessage !== "失败"
-					) {
-						message.success(errorMessage);
+				} else {
+					if (msg) {
+						requestMsg(msg, "error");
 					}
+					throw msg;
 				}
 			}
 
 			nProgress.done();
 			return res.data;
 		} else {
+			//处理blob
 			nProgress.done();
 			return res;
 		}
 	} catch (error: any) {
 		// 出现异常时，隐藏进度条并提示内部错误信息
 		nProgress.done();
-		if (messageOpen) {
-			if (typeof error === "object") {
-				if (errMsgMapping[error.code]) {
-					message.error(errMsgMapping[error.code]);
-				} else if (warningMsgMapping[error.code]) {
-					if (localStorage.getItem("token")) {
-						message.warning(warningMsgMapping[error.code]);
-					}
-				} else {
-					message.error(error.message);
+		if (typeof error === "object") {
+			if (errMsgMapping[error.code]) {
+				requestMsg(errMsgMapping[error.code], "error");
+			} else if (warningMsgMapping[error.code]) {
+				if (localStorage.getItem("token")) {
+					requestMsg(warningMsgMapping[error.code], "warning");
 				}
+			} else {
+				requestMsg(error.message, "error");
 			}
 		}
-		messageOpen = false;
-		setTimeout(() => {
-			messageOpen = true;
-		}, 300);
 		throw error;
 	}
 };

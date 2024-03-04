@@ -1,0 +1,1 @@
+import{u as s,j as a}from"./index-y6A3uTe8.js";function n(){const o=s().pathname.slice(1);return a.jsx(a.Fragment,{children:a.jsx("iframe",{src:o,className:"w-full h-full rounded-md"})})}export{n as default};

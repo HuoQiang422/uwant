@@ -6,8 +6,18 @@ import {
 	SearchOutlined,
 	SoundOutlined,
 } from "@ant-design/icons";
-import { Button, Divider, Form, Input, Modal, Select, Space } from "antd";
-import React, { useLayoutEffect, useRef, useState } from "react";
+import {
+	Button,
+	DatePicker,
+	Divider,
+	Form,
+	Input,
+	Modal,
+	Select,
+	Space,
+} from "antd";
+import { debounce } from "lodash";
+import { useLayoutEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { useWindowSize } from "react-use";
 import { MenuRedux } from "../../redux/menu";
@@ -15,9 +25,11 @@ import { User } from "../../redux/user";
 import {
 	InputFieldConfig,
 	MyFormProps,
+	RangePickerConfig,
 	SelectFieldConfig,
 	UploadConfig,
 } from "../../types/myForm";
+import { MyTableSearchBarProps } from "../../types/myTableSearchBar";
 import {
 	enterLoading,
 	getPermissionUrl,
@@ -32,25 +44,11 @@ import MyForm from "./myForm";
 
 const gridWidth = 220;
 
-interface TableSearchBarProps {
-	exportRequestType?: "GET" | "POST";
-	exportPermissionKey?: string;
-	importPermissionKey?: string;
-	showExport?: boolean;
-	showImport?: boolean;
-	showImportTemplate?: boolean;
-	importTemplateLabel?: string; //模版的文案描述
-	importTemplateIcon?: React.ReactNode; //导入模版的tag图标
-	importTemplateLinkText?: string; //导入模版文件链接文本
-	importFieldName?: string; //导入文件字段
-	uploadAccept?: string;
-	reFresh?: () => void;
-	exportRequestUrl?: string;
-	importRequestUrl?: string;
-}
+const { RangePicker } = DatePicker;
 
 export default function TableSearchBar(
-	props: MyFormProps<InputFieldConfig | SelectFieldConfig> & TableSearchBarProps
+	props: MyFormProps<InputFieldConfig | SelectFieldConfig | RangePickerConfig> &
+		MyTableSearchBarProps
 ) {
 	const {
 		fields,
@@ -75,6 +73,7 @@ export default function TableSearchBar(
 		reFresh,
 		exportRequestUrl,
 		importRequestUrl,
+		realTimeSearch,
 	} = props;
 	const [myForm] = Form.useForm();
 	const gridRef = useRef<HTMLDivElement>(null);
@@ -99,7 +98,9 @@ export default function TableSearchBar(
 		setModalType("");
 	}
 
-	const showItem = (childItem: InputFieldConfig | SelectFieldConfig) => {
+	const showItem = (
+		childItem: InputFieldConfig | SelectFieldConfig | RangePickerConfig
+	) => {
 		return (
 			<Form.Item
 				key={childItem.name}
@@ -113,7 +114,9 @@ export default function TableSearchBar(
 		);
 	};
 
-	function renderItem(item: InputFieldConfig | SelectFieldConfig) {
+	function renderItem(
+		item: InputFieldConfig | SelectFieldConfig | RangePickerConfig
+	) {
 		switch (item.type) {
 			case "input":
 				return (
@@ -145,6 +148,14 @@ export default function TableSearchBar(
 						placeholder={item.placeholder}
 						allowClear
 						optionRender={item.optionRender}
+						style={{ ...item.style, ...childStyle }}
+						className={item.className}
+					/>
+				);
+			case "rangePicker":
+				return (
+					<RangePicker
+						allowClear
 						style={{ ...item.style, ...childStyle }}
 						className={item.className}
 					/>
@@ -336,6 +347,13 @@ export default function TableSearchBar(
 						onFinish={(e) => {
 							if (onFinish) onFinish(removeEmptyValues(e));
 						}}
+						onValuesChange={debounce((_, all) => {
+							if (realTimeSearch) {
+								if (onFinish) {
+									onFinish(removeEmptyValues(all));
+								}
+							}
+						}, 500)}
 					>
 						{fields.length > 0 ? (
 							<div
@@ -357,7 +375,7 @@ export default function TableSearchBar(
 							}}
 						>
 							<Space size="small" wrap>
-								{showOk ? (
+								{showOk && !realTimeSearch ? (
 									<Button
 										type="primary"
 										htmlType="submit"

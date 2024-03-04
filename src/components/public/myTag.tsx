@@ -1,4 +1,8 @@
-import { ClockCircleOutlined, IdcardOutlined } from "@ant-design/icons";
+import {
+	ClockCircleOutlined,
+	IdcardOutlined,
+	MoneyCollectOutlined,
+} from "@ant-design/icons";
 import { Image, Tag } from "antd";
 import { IMG_ERROR } from "../../config/staticInfo";
 import { transformTime } from "../../utils/transformData";
@@ -42,4 +46,13 @@ export function SexTag(props: MyTagProps) {
 export function IdTag(props: MyTagProps) {
 	const { text } = props;
 	return <Tag icon={<IdcardOutlined />}>{text ? text : "-"}</Tag>;
+}
+
+export function MoneyTag(props: MyTagProps) {
+	const { text } = props;
+	return (
+		<Tag color="gold" icon={<MoneyCollectOutlined />}>
+			{text ? text : "-"}
+		</Tag>
+	);
 }

@@ -30,17 +30,31 @@ const request = async (
 
 		config.signal = abortController.signal;
 		if (responseType) config.responseType = responseType;
-
+		
 		const res = await axios(url, config);
+
 		const contentType = res.headers["content-type"]; // 获取Content-Type头部
 
 		if (res.status !== 200) {
 			return null;
 		}
 
+		//获取code值
+		const code = res.data.code || res.data.errorCode;
+
+		//获取消息提示
+		const msg =
+			typeof res.data.content === "string" && res.data.content.trim() !== ""
+				? res.data.content
+				: res.data.msg ||
+				  res.data.message ||
+				  res.data.errorMessage ||
+				  res.data.errorMessge ||
+				  res.data.errorMsg;
+
 		//如果token失效
-		if (res.data.code === 401) {
-			message.error(res.data.message);
+		if (code === 401) {
+			message.error(msg);
 			localStorage.clear();
 			await abortController.abort();
 			newAbortController();
@@ -54,9 +68,9 @@ const request = async (
 			contentType.includes("application/json") ||
 			contentType.includes("text/plain")
 		) {
-			if (res.data.code !== 200) {
-				if (res.data.msg || res.data.message) {
-					throw res.data.msg || res.data.message;
+			if (code !== 200) {
+				if (msg) {
+					throw msg;
 				}
 				throw null;
 			}

@@ -62,21 +62,31 @@ export function transDataForTree(data: any[], key: string = "id") {
 	});
 }
 
+interface transDataForSelectProps {
+	data: any[];
+	key?: string;
+	extraKeys?: string[];
+}
 //根据name、status和id生成label、disabled和value
-export function transDataForSelect(
-	data: any[],
-	key: string = "id",
-	labelKey: string = "name"
-) {
+export function transDataForSelect(props: transDataForSelectProps) {
+	const { data, key = "id", extraKeys } = props;
 	return data.map((item: any) => {
 		const newItem: any = {
-			label: item[labelKey],
+			label: item.name,
 			disabled: item.status === 0,
 			value: item[key],
 		};
 
+		if (extraKeys) {
+			extraKeys.forEach((extraKey) => {
+				if (item.hasOwnProperty(extraKey)) {
+					newItem[extraKey] = item[extraKey];
+				}
+			});
+		}
+
 		if (item.children && item.children.length > 0) {
-			newItem.children = transDataForSelect(item.children, key, labelKey);
+			newItem.children = transDataForSelect({ data: item.children, key });
 		}
 
 		return newItem;
@@ -90,6 +100,10 @@ export function transformTime(text: string | number) {
 
 //后台返回的内容生成父子层级
 export function buildTree(data: any[]) {
+	if (!data) {
+		return [];
+	}
+
 	const idMap: any = {};
 	const root: any[] = [];
 
@@ -152,15 +166,15 @@ export function transformRangePickerTime(dates: any): {
 	endTime: number;
 } {
 	if (dates && dates.length === 2) {
-		const startTime = dates[0].startOf("day").unix();
-		const endTime = dates[1].endOf("day").unix();
+		const startTime = dates[0].startOf("day").unix() * 1000;
+		const endTime = dates[1].endOf("day").unix() * 1000;
 		return { startTime, endTime };
 	} else {
 		const currentDate = new Date();
 		const thirtyDaysAgo = currentDate.getTime() - 30 * 24 * 60 * 60 * 1000;
 		return {
-			startTime: Math.floor(thirtyDaysAgo / 1000),
-			endTime: Math.floor(currentDate.getTime() / 1000),
+			startTime: Math.floor(thirtyDaysAgo),
+			endTime: Math.floor(currentDate.getTime()),
 		};
 	}
 }

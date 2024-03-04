@@ -1,5 +1,5 @@
-// export const API_URL = "/smsProject";
-export const API_URL = "";
+export const API_URL = "/smsProject";
+// export const API_URL = "";
 
 /**
  * @description 系统登录注册

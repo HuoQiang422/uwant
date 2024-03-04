@@ -5,16 +5,20 @@ import MyTable from "../components/public/myTable";
 import { TimeTag } from "../components/public/myTag";
 import TableSearchBar from "../components/public/tableSearchBar";
 import { API_SMS_EXPORT, API_SMS_LIST, API_SMS_SEND } from "../config/api";
+import useFresh from "../hook/useFresh";
 import { User } from "../redux/user";
 import { enterLoading, leaveLoading } from "../utils/controllerUtils";
 import { post } from "../utils/request";
-import { transformJsonToFormData } from "../utils/transformData";
+import {
+	transformJsonToFormData,
+	transformRangePickerTime,
+} from "../utils/transformData";
 
 export default function SmsSend() {
 	const [searchParams, setSearchParams] = useState<any>();
 	const token = useSelector((state: { user: User }) => state.user.token);
 	const [loadings, setLoadings] = useState<boolean[]>([]);
-	const [tableKey, setTableKey] = useState<number>(0);
+	const { key, refresh } = useFresh();
 
 	const columns: TableColumnsType<any> = [
 		{
@@ -95,7 +99,7 @@ export default function SmsSend() {
 		})
 			.then((res) => {
 				if (res) {
-					setTableKey(Math.random());
+					refresh();
 				}
 			})
 			.finally(() => {
@@ -132,16 +136,29 @@ export default function SmsSend() {
 						],
 						name: "state",
 					},
+					{
+						type: "rangePicker",
+						name: "date",
+					},
 				]}
-				onFinish={setSearchParams}
+				onFinish={(e) => {
+					if (e.date) {
+						const time = transformRangePickerTime(e.date);
+						e.startTime = time.startTime;
+						e.endTime = time.endTime;
+					}
+					delete e.date;
+					setSearchParams(e);
+				}}
 				rows={1}
 				showExport
 				exportRequestUrl={API_SMS_EXPORT}
 			/>
 			<MyTable
-				tableKey={tableKey}
+				dataKey="content.records"
+				tableKey={key}
 				columns={columns}
-				searchParams={searchParams}
+				params={{ searchParams: searchParams }}
 				getListUrl={API_SMS_LIST}
 			/>
 		</>

@@ -37,7 +37,7 @@ import {
 	UploadConfig,
 } from "../../types/myForm";
 import { hasPermission } from "../../utils/controllerUtils";
-import { getBase64, removeEmptyValues } from "../../utils/transformData";
+import { getBase64, isURL, removeEmptyValues } from "../../utils/transformData";
 
 const { RangePicker } = DatePicker;
 
@@ -400,7 +400,9 @@ export default function MyForm(
 							{item.link ? (
 								<a
 									onClick={() => {
-										navigator(`${item.link}`);
+										isURL(item.link!)
+											? window.open(`${item.link}`)
+											: navigator(`${item.link}`);
 									}}
 									className=" cursor-pointer font-semibold text-blue-600 hover:text-blue-500"
 								>

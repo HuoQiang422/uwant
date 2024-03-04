@@ -6,6 +6,7 @@ export interface MenuRedux {
 	databaseSiderMenu?: any[];
 	databaseMenu?: any[];
 	permissionsList?: any[];
+	keepAliveTabs?: any;
 }
 
 const defaultValues: MenuRedux = {
@@ -13,6 +14,7 @@ const defaultValues: MenuRedux = {
 	databaseSiderMenu: [],
 	databaseMenu: [],
 	permissionsList: [],
+	keepAliveTabs: [],
 };
 
 const menuRedux = createSlice({
@@ -31,6 +33,9 @@ const menuRedux = createSlice({
 		setPermissionsList: (state, action) => {
 			state.permissionsList = action.payload;
 		},
+		setKeepAliveTabs: (state, action) => {
+			state.keepAliveTabs = action.payload;
+		},
 	},
 });
 
@@ -39,6 +44,7 @@ export const {
 	setDatabaseSiderMenu,
 	setDatabaseMenu,
 	setPermissionsList,
+	setKeepAliveTabs,
 } = menuRedux.actions;
 
 export default menuRedux.reducer;

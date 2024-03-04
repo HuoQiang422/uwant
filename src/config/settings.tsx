@@ -2,7 +2,8 @@
  * @description 首页布局
  */
 export const SIDER_WIDTH: number = 224; //侧边栏宽度
-export const SHOW_CACHE_TABS: boolean = false; //缓存栏
+export const SHOW_CACHE_TABS: boolean = true; //缓存栏
+export const MENU_THEME: "dark" | "light" = "light"; //菜单主题
 
 /**
  * @description 防抖时间

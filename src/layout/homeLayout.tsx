@@ -11,7 +11,13 @@ import KeepLiveTabs from "../components/layout/keepLiveTabs";
 import ContainerCard from "../components/public/containerCard";
 import FloatArea from "../components/public/floatArea";
 import MyMacScrollbar from "../components/public/myMacScrollbar";
-import { SHOW_CACHE_TABS, SIDER_WIDTH, THEME_COLOR } from "../config/settings";
+import MySpin from "../components/public/mySpin";
+import {
+	MENU_THEME,
+	SHOW_CACHE_TABS,
+	SIDER_WIDTH,
+	THEME_COLOR,
+} from "../config/settings";
 import { ControllerProps, setSiderOpenState } from "../redux/controller";
 import { MenuRedux } from "../redux/menu";
 import {
@@ -74,7 +80,7 @@ export default function HomeLayout() {
 				</Header>
 				<Layout className="flex-1 overflow-hidden">
 					<Sider
-						theme="light"
+						theme={MENU_THEME}
 						trigger={null}
 						collapsible
 						collapsed={!siderOpen}
@@ -92,6 +98,7 @@ export default function HomeLayout() {
 								className="px-3 py-6"
 							>
 								<Menu
+									theme={MENU_THEME}
 									onClick={(e) => {
 										const path = e.keyPath;
 										const keyItem = findMenuItemById(items, path[0]);
@@ -111,14 +118,14 @@ export default function HomeLayout() {
 						<Layout className="h-full">
 							{/* 缓存路由展示 */}
 							{SHOW_CACHE_TABS ? (
-								<div className="flex flex-none items-center bg-white w-full h-11 px-3 border-b border-gray-200">
+								<div className="flex flex-none items-center bg-white w-full h-11 px-2 border-b border-gray-200">
 									<KeepLiveTabs />
 								</div>
 							) : null}
 							<MyMacScrollbar id="layout-content">
 								<Content className=" grid grid-cols-1 p-3 min-h-full">
-									<ContainerCard className="min-h-full">
-										<Suspense>
+									<ContainerCard className="flex min-h-full">
+										<Suspense fallback={<MySpin />}>
 											<Outlet />
 										</Suspense>
 									</ContainerCard>

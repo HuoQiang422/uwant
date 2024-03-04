@@ -126,6 +126,9 @@ export function generateAuthMenu(menuList: any[]): MenuProps["items"] {
 
 //获取父级菜单
 export const BuildParentMenuTree = (data: any[]) => {
+	if (!data) {
+		return [];
+	}
 	const idMap: any = {};
 	const root: any[] = [];
 

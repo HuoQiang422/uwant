@@ -1,50 +1,40 @@
-import { Table, TableColumnsType } from "antd";
-import { GetRowKey, Key } from "antd/es/table/interface";
+import { Table } from "antd";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { useUpdateEffect } from "react-use";
 import { MenuRedux } from "../../redux/menu";
 import { User } from "../../redux/user";
+import { MyTableProps } from "../../types/myTable";
 import { enterLoading, leaveLoading } from "../../utils/controllerUtils";
 import { get, post } from "../../utils/request";
+import { buildTree, transformJsonToFormData } from "../../utils/transformData";
 import { abort } from "./signal";
 import TableFix from "./tableFix";
 
-interface MyTableProps {
-	columns: TableColumnsType<any>;
-	getListUrl: string;
-	tableKey?: number;
-	checked?: boolean;
-	selectedRowKeys?: Key[] | any[];
-	setSelectedRowKeys?: React.Dispatch<React.SetStateAction<React.Key[]>>;
-	rowKey?: string | number | symbol | GetRowKey<any>;
-	selectType?: "object" | "string";
-	multiPermissionKey?: string | string[];
-	searchParams?: object;
-	method?: "POST" | "GET" | "get" | "post";
-	data?: any[];
-	onChange?: (page: number, pageSize: any) => void;
-	showPagination?: boolean;
-}
-
-export default function MyTable(props: MyTableProps) {
+const MyTable = (props: MyTableProps) => {
 	const {
 		columns,
 		getListUrl,
 		tableKey = 0,
+		select,
+		rowKey = "id",
+		params,
+		method = "POST",
+		pagination,
+		treeData,
+		dataKey = "content.list",
+		handleData,
+	} = props;
+	const {
 		selectedRowKeys,
 		setSelectedRowKeys,
 		checked,
-		rowKey = "id",
 		selectType = "string",
 		multiPermissionKey,
-		searchParams,
-		method = "POST",
-		data,
-		onChange,
-		showPagination = true,
-	} = props;
-	const [dataSource, setDataSource] = useState<any[]>(data ? data : []);
+	} = select || {};
+	const { searchParams, paramsType } = params || {};
+	const { onPageChange, showPagination = true } = pagination || {};
+	const [dataSource, setDataSource] = useState<any[]>([]);
 	const [loadings, setLoadings] = useState<boolean[]>([]);
 	const [currentPage, setCurrentPage] = useState<number>(1);
 	const [pageSize, setPageSize] = useState<number>(10);
@@ -69,15 +59,19 @@ export default function MyTable(props: MyTableProps) {
 	function getTableList(newPage?: number, newPageSize?: number) {
 		enterLoading(0, setLoadings);
 		if (newPage && !newPageSize) setCurrentPage(1);
+		const data = showPagination
+			? {
+					pageNum: newPage ? newPage : currentPage,
+					pageSize: newPageSize ? newPageSize : pageSize,
+					...searchParams,
+			  }
+			: searchParams;
 		const requestOptions = {
 			url: getListUrl,
-			data: showPagination
-				? {
-						pageNum: newPage ? newPage : currentPage,
-						pageSize: newPageSize ? newPageSize : pageSize,
-						...searchParams,
-				  }
-				: searchParams,
+			data:
+				paramsType === "formData" && data
+					? transformJsonToFormData(data)
+					: data,
 			token,
 		};
 
@@ -86,15 +80,26 @@ export default function MyTable(props: MyTableProps) {
 
 		requestPromise
 			.then((res: any) => {
-				if (res.content.records) {
-					const data = res.content.records;
-					setDataSource(data);
-					if (showPagination) setTotal(res.content.total);
+				const keyArray = dataKey.split(".");
+				let dataSource = res;
+				for (let i = 0; i < keyArray.length; i++) {
+					dataSource = dataSource[keyArray[i]];
+				}
+				leaveLoading(0, setLoadings);
+				if (dataSource) {
+					if (handleData) handleData(dataSource);
+					//解决表格加载中闪动问题
+					setTimeout(() => {
+						treeData
+							? setDataSource(buildTree(dataSource))
+							: setDataSource(dataSource);
+						if (showPagination) setTotal(res.content.total);
+					}, 0);
 				} else {
-					setDataSource(res.content);
+					setDataSource([]);
 				}
 			})
-			.finally(() => {
+			.catch(() => {
 				leaveLoading(0, setLoadings);
 			});
 	}
@@ -131,7 +136,9 @@ export default function MyTable(props: MyTableProps) {
 									selectedRowKeys:
 										selectType === "string"
 											? selectedRowKeys
-											: selectedRowKeys!.map((item) => item[rowKey as string]),
+											: selectedRowKeys!.map(
+													(item: any) => item[rowKey as string]
+											  ),
 							  }
 							: undefined
 					}
@@ -142,7 +149,7 @@ export default function MyTable(props: MyTableProps) {
 									pageSize: pageSize,
 									total: total,
 									onChange(page, pageSize) {
-										if (onChange) onChange(page, pageSize);
+										if (onPageChange) onPageChange(page, pageSize);
 										setCurrentPage(page);
 										setPageSize(pageSize);
 										getTableList(page, pageSize);
@@ -155,4 +162,6 @@ export default function MyTable(props: MyTableProps) {
 			</TableFix>
 		</>
 	);
-}
+};
+
+export default MyTable;

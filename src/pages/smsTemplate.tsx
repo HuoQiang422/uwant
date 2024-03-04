@@ -12,6 +12,7 @@ import {
 	API_SMS_TEMPLATE_LIST,
 	API_SMS_TEMPLATE_OPERATE,
 } from "../config/api";
+import useFresh from "../hook/useFresh";
 import { User } from "../redux/user";
 import { enterLoading, leaveLoading } from "../utils/controllerUtils";
 import { post } from "../utils/request";
@@ -21,7 +22,7 @@ export default function SmsTemplate() {
 	const [searchParams, setSearchParams] = useState<any>();
 	const token = useSelector((state: { user: User }) => state.user.token);
 	const [loadings, setLoadings] = useState<boolean[]>([]);
-	const [tableKey, setTableKey] = useState<number>(0);
+	const { key, refresh } = useFresh();
 	const [modalType, setModalType] = useState<string>("");
 	const [modalOpen, setModalOpen] = useState<boolean>(false);
 	const [handleItem, setHandleItem] = useState<any>();
@@ -115,7 +116,7 @@ export default function SmsTemplate() {
 		})
 			.then((res) => {
 				if (res) {
-					setTableKey(Math.random());
+					refresh();
 				}
 			})
 			.finally(() => {
@@ -135,7 +136,7 @@ export default function SmsTemplate() {
 		})
 			.then((res) => {
 				if (res) {
-					setTableKey(Math.random());
+					refresh();
 				}
 			})
 			.finally(() => {
@@ -173,10 +174,11 @@ export default function SmsTemplate() {
 				</Button>
 			</PageHeaderSpace>
 			<MyTable
-				tableKey={tableKey}
+				tableKey={key}
 				columns={columns}
-				searchParams={searchParams}
+				params={{ searchParams: searchParams }}
 				getListUrl={API_SMS_TEMPLATE_LIST}
+				dataKey="content"
 			/>
 			<Modal
 				open={modalOpen}
@@ -196,9 +198,7 @@ export default function SmsTemplate() {
 					modalType={modalType}
 					handleItem={handleItem}
 					closeModal={closeModal}
-					reFresh={() => {
-						setTableKey(Math.random());
-					}}
+					reFresh={refresh}
 				/>
 			</Modal>
 		</>
