@@ -1,5 +1,5 @@
 import { Table } from "antd";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { useUpdateEffect } from "react-use";
 import { MenuRedux } from "../../redux/menu";
@@ -108,10 +108,19 @@ const MyTable = (props: MyTableProps) => {
 		if (getListUrl) getTableList(currentPage, pageSize);
 	}, [tableKey]);
 
+	const searchContent = useMemo(() => {
+		const searchText = JSON.stringify(searchParams);
+		if (searchText === "{}") {
+			return Math.random();
+		} else {
+			return searchText;
+		}
+	}, [searchParams]);
+
 	useUpdateEffect(() => {
 		abort();
 		getTableList(1);
-	}, [searchParams]);
+	}, [searchContent]);
 
 	return (
 		<>

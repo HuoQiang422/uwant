@@ -2,13 +2,11 @@ import {
 	StyleProvider,
 	legacyLogicalPropertiesTransformer,
 } from "@ant-design/cssinjs";
-import { App, ConfigProvider } from "antd";
-import zhCN from "antd/locale/zh_CN";
+import { App } from "antd";
 import ReactDOM from "react-dom/client";
 import { Provider } from "react-redux";
 import { BrowserRouter } from "react-router-dom";
 import MyMessage from "./components/public/myMessage";
-import { THEME_COLOR } from "./config/settings";
 import "./index.less";
 //redux全局状态管理
 import dayjs from "dayjs";
@@ -29,26 +27,16 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 				transformers={[legacyLogicalPropertiesTransformer]}
 				hashPriority="high"
 			>
-				{/* 全局化配置 */}
-				<ConfigProvider
-					locale={zhCN}
-					theme={{
-						token: {
-							colorPrimary: THEME_COLOR,
-						},
-					}}
-				>
-					{/* 消息提醒，全局上下文 */}
-					<App>
-						<MyMessage />
-					</App>
-					{/* 路由控制区域 */}
-					<BrowserRouter>
-						<RouterBeforeEach>
-							<Router />
-						</RouterBeforeEach>
-					</BrowserRouter>
-				</ConfigProvider>
+				{/* 消息提醒，全局上下文 */}
+				<App>
+					<MyMessage />
+				</App>
+				{/* 路由控制区域 */}
+				<BrowserRouter>
+					<RouterBeforeEach>
+						<Router />
+					</RouterBeforeEach>
+				</BrowserRouter>
 			</StyleProvider>
 		</Provider>
 	</>

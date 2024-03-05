@@ -1,4 +1,4 @@
-import { Layout, Menu, Skeleton } from "antd";
+import { Layout, Menu, Skeleton, theme } from "antd";
 import Sider from "antd/es/layout/Sider";
 import { Content, Header } from "antd/es/layout/layout";
 import { Suspense, useEffect, useState } from "react";
@@ -8,31 +8,41 @@ import { useUpdateEffect, useWindowSize } from "react-use";
 import HeaderLeft from "../components/layout/headerLeft";
 import HeaderRight from "../components/layout/headerRight";
 import KeepLiveTabs from "../components/layout/keepLiveTabs";
+import LogoArea from "../components/layout/logoArea";
 import ContainerCard from "../components/public/containerCard";
 import FloatArea from "../components/public/floatArea";
 import MyMacScrollbar from "../components/public/myMacScrollbar";
 import MySpin from "../components/public/mySpin";
-import {
-	MENU_THEME,
-	SHOW_CACHE_TABS,
-	SIDER_WIDTH,
-	THEME_COLOR,
-} from "../config/settings";
-import { ControllerProps, setSiderOpenState } from "../redux/controller";
 import { MenuRedux } from "../redux/menu";
+import { SettingsProps, setSiderOpenState } from "../redux/settings";
 import {
 	findMenuItemById,
 	findMenuOpenKeys,
 	generateIcon,
 } from "../utils/findMenu";
 
+const { useToken } = theme;
+
 export default function HomeLayout() {
+	const { token } = useToken();
 	const dispatch = useDispatch();
 	const items = useSelector(
 		(state: { menuRedux: MenuRedux }) => state.menuRedux.siderMenu
 	);
 	const siderOpen = useSelector(
-		(state: { controller: ControllerProps }) => state.controller.siderOpen
+		(state: { settings: SettingsProps }) => state.settings.siderOpen
+	);
+	const layoutType = useSelector(
+		(state: { settings: SettingsProps }) => state.settings.layoutType
+	);
+	const theme = useSelector(
+		(state: { settings: SettingsProps }) => state.settings.theme
+	);
+	const siderWidth = useSelector(
+		(state: { settings: SettingsProps }) => state.settings.siderWidth
+	);
+	const showKeepAliveTabs = useSelector(
+		(state: { settings: SettingsProps }) => state.settings.showKeepAliveTabs
 	);
 	const navigator = useNavigate();
 	const location = useLocation();
@@ -70,24 +80,35 @@ export default function HomeLayout() {
 	return (
 		<>
 			<Layout>
-				<Header
-					id="layout-header"
-					className=" all-white overflow-hidden select-none flex justify-between items-center px-4 h-12 shadow z-10"
-					style={{ backgroundColor: `${THEME_COLOR}` }}
-				>
-					<HeaderLeft />
-					<HeaderRight />
-				</Header>
+				{layoutType === "top-down" ? (
+					<Header
+						id="layout-header"
+						className=" all-white overflow-hidden select-none flex justify-between items-center px-4 h-12 shadow z-10"
+						style={{ backgroundColor: token.colorPrimary }}
+					>
+						<HeaderLeft />
+						<HeaderRight />
+					</Header>
+				) : null}
 				<Layout className="flex-1 overflow-hidden">
 					<Sider
-						theme={MENU_THEME}
+						theme={theme}
 						trigger={null}
 						collapsible
 						collapsed={!siderOpen}
-						width={SIDER_WIDTH}
+						width={siderWidth}
 						collapsedWidth={60} //为了缩起来的列表图标居中展示
-						className=" border-r border-gray-200"
+						className=" border-r border-gray-200 *:flex *:flex-col"
 					>
+						{layoutType === "left-right" ? (
+							<div
+								className={`flex box-border flex-col w-full ${
+									theme === "dark" ? "all-white" : "all-dark"
+								} mt-4 mb-2 ${siderOpen ? "px-4" : "px-1"} transition-all`}
+							>
+								<LogoArea showText={siderOpen} />
+							</div>
+						) : null}
 						<MyMacScrollbar>
 							<Skeleton
 								loading={items!?.length <= 0}
@@ -98,7 +119,7 @@ export default function HomeLayout() {
 								className="px-3 py-6"
 							>
 								<Menu
-									theme={MENU_THEME}
+									theme={theme}
 									onClick={(e) => {
 										const path = e.keyPath;
 										const keyItem = findMenuItemById(items, path[0]);
@@ -115,9 +136,19 @@ export default function HomeLayout() {
 						</MyMacScrollbar>
 					</Sider>
 					<Content>
+						{layoutType === "left-right" ? (
+							<Header
+								id="layout-header"
+								className={`all-dark overflow-hidden select-none flex justify-between items-center px-4 h-12 shadow z-10 border-b border-gray-200`}
+								style={{ backgroundColor: `white` }}
+							>
+								<HeaderLeft showLogoArea={false} />
+								<HeaderRight />
+							</Header>
+						) : null}
 						<Layout className="h-full">
 							{/* 缓存路由展示 */}
-							{SHOW_CACHE_TABS ? (
+							{showKeepAliveTabs ? (
 								<div className="flex flex-none items-center bg-white w-full h-11 px-2 border-b border-gray-200">
 									<KeepLiveTabs />
 								</div>

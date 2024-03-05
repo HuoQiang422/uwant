@@ -1,14 +1,21 @@
-import { CloseOutlined } from "@ant-design/icons";
-import { Button, Tabs, TabsProps } from "antd";
+import {
+	CloseOutlined,
+	DeleteOutlined,
+	DeleteRowOutlined,
+} from "@ant-design/icons";
+import { Button, Dropdown, Tabs, TabsProps, theme } from "antd";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 import { MenuRedux, setKeepAliveTabs } from "../../redux/menu";
 import { findMenuItemById, findMenuOpenKeys } from "../../utils/findMenu";
 
+const { useToken } = theme;
+
 export default function KeepLiveTabs() {
+	const { token } = useToken();
 	const dispatch = useDispatch();
-	const items = useSelector(
+	const keepAliveTabs = useSelector(
 		(state: { menuRedux: MenuRedux }) => state.menuRedux.keepAliveTabs
 	);
 	const databaseMenu = useSelector(
@@ -23,14 +30,20 @@ export default function KeepLiveTabs() {
 
 	function getOpenKeys() {
 		const pathname = location.pathname;
-		return findMenuOpenKeys(databaseMenu, pathname);
+		if (pathname !== "/") {
+			return findMenuOpenKeys(databaseMenu, pathname);
+		} else {
+			return [];
+		}
 	}
+
 	function getRouterPage() {
-		const openKeys = getOpenKeys();
-		const key = openKeys[0];
+		const key = getOpenKeys()[0];
 		const item = findMenuItemById(databaseMenu, key);
 		if (key) {
-			const isExits = items?.some((item: any) => String(item.key) === key);
+			const isExits = keepAliveTabs?.some(
+				(item: any) => String(item.key) === key
+			);
 			if (!isExits) {
 				addTabs(item);
 			}
@@ -38,53 +51,105 @@ export default function KeepLiveTabs() {
 	}
 
 	function addTabs(item: any) {
-		const newItems = items ? [...items] : []; // 添加items变量的检查，并根据情况赋值空数组
-		newItems.push({
+		const newkeepAliveTabs = keepAliveTabs ? [...keepAliveTabs] : []; // 添加keepAliveTabs变量的检查，并根据情况赋值空数组
+		newkeepAliveTabs.push({
 			key: String(item.id),
 			label: item.name,
 			url: item.url,
 		});
-		dispatch(setKeepAliveTabs(newItems));
+		dispatch(setKeepAliveTabs(newkeepAliveTabs));
 	}
 
 	function removeTabs(clickItem: any) {
-		const newItems = items ? [...items] : []; // 添加items变量的检查，并根据情况赋值空数组
-		newItems.splice(
-			newItems.findIndex((item) => String(item.key) === clickItem.key),
-			1
+		const newkeepAliveTabs = keepAliveTabs ? [...keepAliveTabs] : [];
+		const currentIndex = newkeepAliveTabs.findIndex(
+			(item) => String(item.key) === clickItem.key
 		);
-		dispatch(setKeepAliveTabs(newItems));
-		if (clickItem.url === location.pathname) {
-			navigator(newItems[newItems.length - 1].url);
+		if (currentIndex !== -1) {
+			newkeepAliveTabs.splice(currentIndex, 1);
+			dispatch(setKeepAliveTabs(newkeepAliveTabs));
+
+			const nextIndex =
+				currentIndex < newkeepAliveTabs.length
+					? currentIndex
+					: currentIndex - 1;
+			if (nextIndex >= 0) {
+				navigator(newkeepAliveTabs[nextIndex].url);
+			}
 		}
 	}
 
-	function renderKeepLiveTabsItem(items: TabsProps["items"]) {
-		if (items && items?.length > 0) {
-			return items.map((item: any) => {
+	function renderKeepLiveTabsItem(keepAliveTabs: TabsProps["items"]) {
+		if (keepAliveTabs && keepAliveTabs?.length > 0) {
+			return keepAliveTabs.map((item: any) => {
+				const items =
+					keepAliveTabs.length > 1
+						? [
+								{
+									key: "closeNow",
+									label: "关闭当前页",
+									icon: <CloseOutlined />,
+									onClick: () => {
+										removeTabs(item);
+									},
+								},
+								{
+									key: "closeOther",
+									label: "关闭其他页",
+									icon: <DeleteRowOutlined />,
+									onClick: () => {
+										const currentTab = keepAliveTabs.find(
+											(tab: any) => tab.key === item.key
+										);
+										navigator(item.url);
+										dispatch(setKeepAliveTabs([currentTab]));
+									},
+								},
+								{
+									key: "closeAll",
+									label: "关闭全部页",
+									icon: <DeleteOutlined />,
+									onClick: () => {
+										dispatch(setKeepAliveTabs([]));
+										navigator("/"); // 导航到第一页
+									},
+								},
+						  ]
+						: [];
+
 				return {
 					...item,
 					label: (
-						<div className=" relative">
+						<Dropdown menu={{ items }} trigger={["contextMenu"]}>
 							<div
-								onClick={() => {
-									navigator(item.url);
+								className=" relative flex items-center min-h-7"
+								style={{
+									backgroundColor:
+										item.key === getOpenKeys()[0]
+											? token.controlItemBgActive
+											: "",
 								}}
-								className="px-8"
 							>
-								{item.label}
+								<div
+									onClick={() => {
+										navigator(item.url);
+									}}
+									className="px-8"
+								>
+									{item.label}
+								</div>
+								<Button
+									style={{ display: keepAliveTabs.length > 1 ? "" : "none" }}
+									className=" absolute"
+									type="text"
+									onClick={() => {
+										removeTabs(item);
+									}}
+									size="small"
+									icon={<CloseOutlined />}
+								/>
 							</div>
-							<Button
-								style={{ display: items.length > 1 ? "" : "none" }}
-								className=" absolute"
-								type="text"
-								onClick={() => {
-									removeTabs(item);
-								}}
-								size="small"
-								icon={<CloseOutlined />}
-							/>
-						</div>
+						</Dropdown>
 					),
 				};
 			});
@@ -98,7 +163,7 @@ export default function KeepLiveTabs() {
 			<Tabs
 				activeKey={getOpenKeys()[0]}
 				className="segmented-tabs"
-				items={renderKeepLiveTabsItem(items)}
+				items={renderKeepLiveTabsItem(keepAliveTabs)}
 				indicator={{ size: 0 }}
 			/>
 		</div>

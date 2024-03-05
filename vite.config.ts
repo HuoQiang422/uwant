@@ -10,8 +10,8 @@ export default defineConfig({
 		port: 8080,
 		proxy: {
 			"/smsProject": {
-				// target: "http://39.98.85.26:28081/mobileActive",
-				target: "http://192.168.2.14:28086/",
+				// target: "http://39.98.85.26:28086/",
+				target: "http://192.168.2.14:28086/smsProject",
 				changeOrigin: true,
 				rewrite: (path) => path.replace(/^\/smsProject/, ""), // 不可以省略rewrite
 			},

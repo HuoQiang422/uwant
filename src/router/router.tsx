@@ -1,4 +1,5 @@
-import { Flex, Spin } from "antd";
+import { ConfigProvider, Flex, Spin } from "antd";
+import zhCN from "antd/locale/zh_CN";
 import "nprogress/nprogress.css";
 import { Suspense, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -11,6 +12,7 @@ import {
 	setPermissionsList,
 	setSiderMenu,
 } from "../redux/menu";
+import { SettingsProps } from "../redux/settings";
 import { User } from "../redux/user";
 import { getCurrentRouterMap } from "../utils/routerHelpers";
 import menuRouterListen from "./menuRouterListen";
@@ -18,6 +20,9 @@ import { localRouter, myRouters, setRouters } from "./myRouter";
 
 function RouterBeforeEach({ children }: any) {
 	const { getMenu, getAuthList } = menuRouterListen();
+	const themeColor = useSelector(
+		(state: { settings: SettingsProps }) => state.settings.themeColor
+	);
 	const navigator = useNavigate();
 	const location = useLocation();
 	const dispatch = useDispatch();
@@ -71,21 +76,30 @@ function RouterBeforeEach({ children }: any) {
 	}
 
 	return (
-		<div className="root-container flex">
-			{localRouter.some((router) => router.path === location.pathname) &&
-			token &&
-			!loadingCompleted ? (
-				whenRouterSpin("login")
-			) : loadingCompleted ? (
-				children
-			) : localRouter.some((router) => router.path === location.pathname) ? (
-				children
-			) : location.pathname === "/" && token ? (
-				<HomeLayout />
-			) : (
-				whenRouterSpin("load")
-			)}
-		</div>
+		<ConfigProvider
+			locale={zhCN}
+			theme={{
+				token: {
+					colorPrimary: themeColor,
+				},
+			}}
+		>
+			<div className="root-container flex">
+				{localRouter.some((router) => router.path === location.pathname) &&
+				token &&
+				!loadingCompleted ? (
+					whenRouterSpin("login")
+				) : loadingCompleted ? (
+					children
+				) : localRouter.some((router) => router.path === location.pathname) ? (
+					children
+				) : location.pathname === "/" && token ? (
+					<HomeLayout />
+				) : (
+					whenRouterSpin("load")
+				)}
+			</div>
+		</ConfigProvider>
 	);
 }
 

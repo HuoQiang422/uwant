@@ -1,16 +1,16 @@
 /**
  * 网站基本信息
  */
-export const LOGO = "/logo.svg"; //logo
+export const LOGO = "./logo.svg"; //logo
 export const LOGO_TEXT = "友望用户服务"; //logo文字
-export const BACKGROUND_IMAGE = "/images/background-img.png";
+export const BACKGROUND_IMAGE = "./images/background-img.png";
 export const HOME_TITLE = "友望用户服务"; //网站标题
 export const LOGIN_FOOTER_TEXT = "©友望用户服务"; //登录页面底部的文本信息
 
 /**
  * 登录页面
  */
-export const LOGIN_ICON = "/logo.svg"; //登录表单显示的图标
+export const LOGIN_ICON = "./logo.svg"; //登录表单显示的图标
 export const LOGIN_BOX_TITLE = "管理员登录"; //登录框标题
 
 /**

@@ -1,6 +1,7 @@
 import React from "react";
+import { useSelector } from "react-redux";
 import { useLocation } from "react-router-dom";
-import { HOME_HAS_BG } from "../../config/settings";
+import { SettingsProps } from "../../redux/settings";
 import { homeUrl } from "../../utils/generateAuthList";
 
 interface ContainerCardProps {
@@ -10,13 +11,16 @@ interface ContainerCardProps {
 }
 
 export default function ContainerCard(props: ContainerCardProps) {
+	const homeHasBg = useSelector(
+		(state: { settings: SettingsProps }) => state.settings.homeHasBg
+	);
 	const { children, className, style } = props;
 	const location = useLocation();
 
 	return (
 		<div
 			className={`${
-				HOME_HAS_BG
+				homeHasBg
 					? "flex flex-col bg-white p-3 rounded-md border"
 					: location.pathname === homeUrl || location.pathname === "/"
 					? ""

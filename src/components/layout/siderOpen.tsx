@@ -1,12 +1,15 @@
 import { MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
 import { Button } from "antd";
 import { useDispatch, useSelector } from "react-redux";
-import { ControllerProps, setSiderOpenState } from "../../redux/controller";
+import {
+	SettingsProps,
+	setSiderOpenState
+} from "../../redux/settings";
 
 export default function SiderOpen() {
 	const dispatch = useDispatch();
 	const siderOpen = useSelector(
-		(state: { controller: ControllerProps }) => state.controller.siderOpen
+		(state: { settings: SettingsProps }) => state.settings.siderOpen
 	);
 
 	return (

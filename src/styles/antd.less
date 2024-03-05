@@ -60,7 +60,6 @@
 	.ant-tabs-tab {
 		margin: 2px !important;
 		padding: 0px !important;
-		border: 1px solid rgb(229 231 235 / var(--tw-border-opacity)) !important;
 		border-radius: 4px !important;
 		overflow: hidden;
 
@@ -69,24 +68,19 @@
 			transition: none;
 			justify-content: center;
 			align-items: center;
-			height: 28px !important;
 			margin: 0px !important;
-			padding: 2px 0px !important;
+			padding: 0px !important;
 		}
 
 		button {
 			width: 12px !important;
 			opacity: 0 !important;
 			right: 2px !important;
-			top: -1px !important;
-
-			:hover {
-				background-color: hsla(0, 0%, 0%, 0.008);
-			}
 		}
 
 		:hover {
 			background-color: #f2f2f2;
+			transition: all 0.3s;
 
 			button {
 				width: 24px !important;
@@ -96,12 +90,8 @@
 	}
 
 	.ant-tabs-tab-active {
-		.ant-tabs-tab-btn {
-			background-color: #f2f2f2 !important;
-		}
-
 		:hover {
-			background-color: #f2f2f2;
+			background-color: unset;
 		}
 	}
 
@@ -111,19 +101,22 @@
 }
 
 .ant-tabs-dropdown-menu-item {
+	padding: 0px !important;
+
 	> span {
 		> div {
 			display: flex !important;
 			width: 100% !important;
 			justify-content: space-between !important;
 			align-items: center !important;
-			margin-right: 32px !important;
+			padding: 8px 0px 8px 12px !important;
+
 			> div {
 				padding-left: 4px !important;
 			}
 
 			button {
-				right: 0px !important;
+				right: 4px !important;
 				width: 12px !important;
 				opacity: 0 !important;
 			}
@@ -136,4 +129,12 @@
 			opacity: 1 !important;
 		}
 	}
+}
+
+//按钮只有图标时候
+.ant-btn-icon-only{
+	display: flex !important;
+	flex-direction: column !important;
+	justify-content: center !important;
+	align-items: center !important;
 }

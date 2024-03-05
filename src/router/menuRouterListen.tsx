@@ -1,12 +1,12 @@
 import { useDispatch, useSelector } from "react-redux";
 import { API_LOGIN_USERMENU, API_LOGIN_USERROUTER } from "../config/api";
-import { GET_MENU_FROM_SERVER } from "../config/settings";
 import {
 	setDatabaseMenu,
 	setDatabaseSiderMenu,
 	setPermissionsList,
 	setSiderMenu,
 } from "../redux/menu";
+import { SettingsProps } from "../redux/settings";
 import { User } from "../redux/user";
 import {
 	generateAuthMenu,
@@ -18,12 +18,15 @@ import { menuDatabase, siderDatabase } from "./menuRouterData";
 import { myRouters, setRouters } from "./myRouter";
 
 export default function menuRouterListen() {
+	const getMenuFromServer = useSelector(
+		(state: { settings: SettingsProps }) => state.settings.getMenuFromServer
+	);
 	const dispatch = useDispatch();
 	const token = useSelector((state: { user: User }) => state.user.token);
 
 	async function getMenu() {
 		let res: any;
-		if (GET_MENU_FROM_SERVER) {
+		if (getMenuFromServer) {
 			try {
 				const result = await post({
 					url: API_LOGIN_USERMENU,
@@ -46,7 +49,7 @@ export default function menuRouterListen() {
 		setLoadingCompleted?: React.Dispatch<React.SetStateAction<boolean>>
 	) {
 		let res: any;
-		if (GET_MENU_FROM_SERVER) {
+		if (getMenuFromServer) {
 			try {
 				const result = await post({
 					url: API_LOGIN_USERROUTER,
