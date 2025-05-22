@@ -9,6 +9,7 @@ import { transformTime } from "../../utils/transformData";
 
 interface MyTagProps {
 	text: string | number;
+	color?: string;
 }
 
 export function ImageTag(props: MyTagProps) {
@@ -28,9 +29,9 @@ export function ImageTag(props: MyTagProps) {
 }
 
 export function TimeTag(props: MyTagProps) {
-	const { text } = props;
+	const { text, color } = props;
 	return (
-		<Tag icon={<ClockCircleOutlined />}>{text ? transformTime(text) : "-"}</Tag>
+		<Tag icon={<ClockCircleOutlined />} color={color}>{text ? transformTime(text) : "-"}</Tag>
 	);
 }
 

@@ -19,6 +19,7 @@
 		"@reduxjs/toolkit": "^2.2.1",
 		"antd": "^5.15.0",
 		"axios": "^1.6.7",
+		"dayjs": "^1.11.13",
 		"file-saver": "^2.0.5",
 		"lodash": "^4.17.21",
 		"mac-scrollbar": "^0.13.6",

@@ -11,7 +11,7 @@ import { buildTree, transformJsonToFormData } from "../../utils/transformData";
 import { abort } from "./signal";
 import TableFix from "./tableFix";
 
-const MyTable = (props: MyTableProps) => {
+const MyTable = (props: MyTableProps & { onRowClick?: (record: any, event: React.MouseEvent<HTMLElement>) => void; }) => {
 	const {
 		columns,
 		getListUrl,
@@ -23,7 +23,14 @@ const MyTable = (props: MyTableProps) => {
 		pagination,
 		treeData,
 		dataKey = "content.list",
+		expandable,
 		handleData,
+		onRowClick,
+		onRow,
+		getProgress,
+		getAttachments,
+		onProgressData,
+		onAttachmentsData,
 	} = props;
 	const {
 		selectedRowKeys,
@@ -32,9 +39,11 @@ const MyTable = (props: MyTableProps) => {
 		selectType = "string",
 		multiPermissionKey,
 	} = select || {};
-	const { searchParams, paramsType } = params || {};
+	const { searchParams, paramsType, main_id } = params || {};
 	const { onPageChange, showPagination = true } = pagination || {};
 	const [dataSource, setDataSource] = useState<any[]>([]);
+	const [progressList, setProgressList] = useState<any[]>([]);
+	const [attachmentsList, setAttachmentsList] = useState<any[]>([]);
 	const [loadings, setLoadings] = useState<boolean[]>([]);
 	const [currentPage, setCurrentPage] = useState<number>(1);
 	const [pageSize, setPageSize] = useState<number>(10);
@@ -43,6 +52,83 @@ const MyTable = (props: MyTableProps) => {
 	const permissionsList = useSelector(
 		(state: { menuRedux: MenuRedux }) => state.menuRedux.permissionsList
 	);
+
+	// 获取进度列表
+	const getProgressList = async (taskId: string | number) => {
+		if (!getProgress) return;
+		try {
+			const requestOptions = {
+				url: `${getProgress}?main_id=${taskId}`,
+				data: {},
+				token
+			};
+			const response = await post(requestOptions);
+			console.log('Progress response:', response);
+			if (response.code === 200) {
+				const progressData = response.content || [];
+				setProgressList(progressData);
+				if (onProgressData) {
+					onProgressData(progressData);
+				}
+			}
+		} catch (error) {
+			console.error('Failed to fetch progress:', error);
+			setProgressList([]);
+			if (onProgressData) {
+				onProgressData([]);
+			}
+		}
+	};
+
+	// 获取附件列表
+	const getAttachmentsList = async (taskId: string | number) => {
+		if (!getAttachments) return;
+		try {
+			const requestOptions = {
+				url: `${getAttachments}?main_id=${taskId}`,
+				data: {},
+				token
+			};
+			const response = await post(requestOptions);
+			console.log('Attachments response:', response);
+			if (response.code === 200) {
+				const attachmentsData = response.content || [];
+				setAttachmentsList(attachmentsData);
+				if (onAttachmentsData) {
+					onAttachmentsData(attachmentsData);
+				}
+			}
+		} catch (error) {
+			console.error('Failed to fetch attachments:', error);
+			setAttachmentsList([]);
+			if (onAttachmentsData) {
+				onAttachmentsData([]);
+			}
+		}
+	};
+
+	useEffect(() => {
+		if (getListUrl) getTableList(currentPage, pageSize);
+		if (getProgress && main_id) {
+			console.log('Fetching progress for main_id:', main_id);
+			getProgressList(main_id);
+		}
+		if (getAttachments && main_id) {
+			console.log('Fetching attachments for main_id:', main_id);
+			getAttachmentsList(main_id);
+		}
+	}, [tableKey]);
+
+	useEffect(() => {
+		if (getProgress && main_id) {
+			console.log('main_id changed, fetching progress:', main_id);
+			getProgressList(main_id);
+		}
+		if (getAttachments && main_id) {
+			console.log('main_id changed, fetching attachments:', main_id);
+			getAttachmentsList(main_id);
+		}
+	}, [main_id]);
 
 	const onSelectChange = (
 		newSelectedRowKeys: React.Key[],
@@ -104,10 +190,6 @@ const MyTable = (props: MyTableProps) => {
 			});
 	}
 
-	useEffect(() => {
-		if (getListUrl) getTableList(currentPage, pageSize);
-	}, [tableKey]);
-
 	const searchContent = useMemo(() => {
 		const searchText = JSON.stringify(searchParams);
 		if (searchText === "{}") {
@@ -131,6 +213,13 @@ const MyTable = (props: MyTableProps) => {
 					columns={columns}
 					scroll={{ x: "max-content" }}
 					rowKey={rowKey}
+					tableLayout="fixed"
+					expandable={expandable}
+					onRow={(record) => ({
+						onClick: (event) => {
+							if (onRowClick) onRowClick(record, event);
+						},
+					})}
 					rowSelection={
 						checked &&
 						permissionsList?.find((item: any) =>

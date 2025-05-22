@@ -34,3 +34,24 @@ export const API_SMS_TEMPLATE_OPERATE = API_URL + "/template/operate"; //短信�
  */
 export const API_SYSCONFIG_DETAIL = API_URL + "/sysConfig/configDeatil"; //配置详情
 export const API_SYSCONFIG_SAVE = API_URL + "/sysConfig/configDoor"; //配置修改
+
+
+/**
+ * @description 需求管理中心
+ */
+
+export const API_TASKS_GET_ALL = API_URL + "/api/tasks/all"  //获取所有任务
+export const API_TASKS_GET_BY_MAIN_ID = API_URL + "/api/tasks"  //根据主任务id获取子任务
+export const API_TASKS_Create = API_URL + "/api/main-tasks/create"  //创建主任务
+export const API_SUB_TASKS_Create = API_URL + "/api/sub-tasks/create"  //创建子任务
+export const API_SUB_TASKS_DELETE = API_URL + "/api/sub-tasks/delete"  //删除子任务
+export const API_SUB_TASKS_Update = API_URL + "/api/sub-tasks/update"  //删除子任务
+export const API_TASKS_Update = API_URL + "/api/main-tasks/update"  //更新主任务
+
+export const API_TASKS_DELETE = API_URL + "/api/main-tasks/delete"  //删除对应任务
+
+
+
+export const API_TASKS_PROGRESS = API_URL + "/api/task-progress/list"  //获取任务进度
+export const API_ADD_TASKS_PROGRESS = API_URL + "/api/task-progress/add" //添加记录
+export const API_TASKS_ATTACHMENTS = API_URL + "/api/attachment/list"  //获取附件列表

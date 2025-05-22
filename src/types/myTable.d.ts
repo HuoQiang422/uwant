@@ -1,3 +1,5 @@
+import React from "react";
+
 interface MyTableSelectProps {
 	/**
 	 * @description 多选开关
@@ -50,6 +52,11 @@ interface MyTableParamsProps {
 	 * @description 参数类型，默认为formData，如果需要json格式，请传json
 	 */
 	paramsType?: "formData" | "json";
+
+	/**
+	 * @description 主任务ID
+	 */
+	main_id?: string | number;
 }
 
 export interface MyTableProps {
@@ -62,7 +69,10 @@ export interface MyTableProps {
 	 * @description 获取表格数据的接口地址
 	 */
 	getListUrl: string;
-
+	/**
+	 * 
+	 */
+	getProgress:string;
 	/**
 	 * @description 表格key
 	 */
@@ -96,6 +106,11 @@ export interface MyTableProps {
 	handleData?: (result: any) => void;
 
 	/**
+	 * @description 行点击事件回调
+	 */
+	onRowClick?: (record: any, event: React.MouseEvent<HTMLElement>) => void;
+
+	/**
 	 * @description 搜索条件/表格请求参数
 	 */
 	params?: MyTableParamsProps;
@@ -109,4 +124,43 @@ export interface MyTableProps {
 	 * @description 页码
 	 */
 	pagination?: MyTablePageProps;
+
+	/**
+	 * @description 行点击事件，返回行属性
+	 */
+	onRow?: (record: any) => React.HTMLAttributes<HTMLElement>;
+
+	/**
+	 * @description 进度数据处理函数
+	 */
+	onProgressData?: (data: any[]) => void;
+
+	/**
+	 * @description 可展开行
+	 */
+	expandable?: {
+		expandedRowRender?: (record: any) => React.ReactNode;
+		rowExpandable?: (record: any) => boolean;
+	};
+}
+
+
+export interface MyTableProps {
+    columns: any;
+    getListUrl: string;
+	getProgress:string;
+    tableKey?: number;
+    select?: any;
+    rowKey?: string;
+    params?: any;
+    method?: "POST" | "GET";
+    pagination?: any;
+    treeData?: boolean;
+    dataKey?: string;
+    handleData?: (data: any) => void;
+    onProgressData?: (data: any[]) => void;
+    expandable?: {
+        expandedRowRender?: (record: any) => React.ReactNode;
+        rowExpandable?: (record: any) => boolean;
+    };
 }

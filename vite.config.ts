@@ -11,7 +11,7 @@ export default defineConfig({
 		proxy: {
 			"/smsProject": {
 				// target: "http://39.98.85.26:28086/",
-				target: "http://192.168.2.14:28086/smsProject",
+				target: "http://localhost:28086",
 				changeOrigin: true,
 				rewrite: (path) => path.replace(/^\/smsProject/, ""), // 不可以省略rewrite
 			},

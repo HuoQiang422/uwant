@@ -8,6 +8,7 @@ import {
 	newAbortController,
 } from "../components/public/signal";
 import { errMsgMapping, warningMsgMapping } from "../config/errMsg";
+import { transformJsonToFormData } from "./transformData";
 
 export interface RequestParams {
 	url: string;
@@ -165,3 +166,66 @@ export const post = (props: RequestParams) => {
 		responseType
 	);
 };
+
+export const put = (props: RequestParams & { id?: string | number }) => {
+	nProgress.start();
+	const { url, data, token, responseType, id } = props;
+  
+	// 调试信息
+	console.log("put 请求的 id 值：", id);
+  
+	// 验证 id 是否有效
+	if (id === undefined || id === null) {
+	  console.error("PUT 请求缺少 id 参数！");
+	  nProgress.done();
+	  return Promise.reject("PUT 请求缺少 id 参数！");
+	}
+  
+	// 构建 URL，保持 ID 为字符串
+	const finalUrl = `${url}?id=${id}`;
+  
+	console.log("最终请求的 URL：", finalUrl);
+  
+	return request(
+	  finalUrl,
+	  {
+		data: data,
+		method: "PUT",
+	  },
+	  token,
+	  responseType
+	);
+};
+  
+export const del = (props: RequestParams & { id: string | number }) => {
+	nProgress.start();
+	const { url, id, token, responseType } = props;
+  
+	// 调试信息
+	console.log("delete 请求的 id 值：", id);
+  
+	// 验证 id 是否有效
+	if (id === undefined || id === null || isNaN(Number(id))) {
+	  console.error("DELETE 请求缺少有效的 id 参数！");
+	  nProgress.done();
+	  return Promise.reject("DELETE 请求缺少有效的 id 参数！");
+	}
+  
+	// 构建 FormData
+	const formData = transformJsonToFormData({ id });
+  
+	// 发起请求
+	return request(
+	  url,
+	  {
+		data: formData,
+		method: "DELETE",
+	  },
+	  token,
+	  responseType
+	);
+};
+  
+  
+  
+  

@@ -207,7 +207,7 @@ export default function MyForm(
 										<Flex
 											justify="center"
 											align="center"
-											style={{ padding: "24px" }}
+											style={{ padding: "10px" }}
 										>
 											<Spin />
 										</Flex>
@@ -254,7 +254,7 @@ export default function MyForm(
 										<Flex
 											justify="center"
 											align="center"
-											style={{ padding: "24px" }}
+											style={{ padding: "10px" }}
 										>
 											<Spin />
 										</Flex>
