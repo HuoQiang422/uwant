@@ -195,9 +195,9 @@ export const put = (props: RequestParams & { id?: string | number }) => {
 	  token,
 	  responseType
 	);
-};
+  };
   
-export const del = (props: RequestParams & { id: string | number }) => {
+  export const del = (props: RequestParams & { id: string | number }) => {
 	nProgress.start();
 	const { url, id, token, responseType } = props;
   
@@ -224,7 +224,7 @@ export const del = (props: RequestParams & { id: string | number }) => {
 	  token,
 	  responseType
 	);
-};
+  };
   
   
   

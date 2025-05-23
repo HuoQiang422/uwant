@@ -1,4 +1,4 @@
-import { Button, Space, TableColumnsType, Tag, Table, Drawer, Row, Col, Card, Modal, Progress, Descriptions, Tooltip } from "antd";
+import { Button, Space, TableColumnsType, Tag, Table, Drawer, Row, Col, Card, Modal, Progress, Descriptions, Tooltip, Input, message, Dropdown, Timeline } from "antd";
 import { useEffect, useMemo, useState } from "react";
 import dayjs from 'dayjs';
 import { useSelector } from "react-redux";
@@ -14,7 +14,8 @@ import { enterLoading, leaveLoading } from "../utils/controllerUtils";
 import { Typography } from 'antd';
 import { Badge } from 'antd';
 import { Avatar } from 'antd';
-import { FileTextOutlined, FileImageOutlined, FilePdfOutlined, FileExcelOutlined, FileWordOutlined, FileZipOutlined, FileOutlined } from '@ant-design/icons';
+import { FileTextOutlined, FileImageOutlined, FilePdfOutlined, FileExcelOutlined, FileWordOutlined, FileZipOutlined, FileOutlined, ClockCircleOutlined, CheckCircleOutlined, SyncOutlined, PauseCircleOutlined } from '@ant-design/icons';
+import type { MenuProps } from 'antd';
 
 interface TaskProgress {
     progressId: string;
@@ -32,6 +33,26 @@ export default function TaskManagement() {
         '进行中': 'blue',
         '已完成': 'green',
     };
+
+    const statusIconMap: Record<string, React.ReactNode> = {
+        '待处理': <ClockCircleOutlined style={{ color: '#8c8c8c' }} />,
+        '进行中': <SyncOutlined spin style={{ color: '#1890ff' }} />,
+        '已完成': <CheckCircleOutlined style={{ color: '#52c41a' }} />,
+    };
+
+    const getStatusProgress = (status: string): number => {
+        switch (status) {
+            case '待处理':
+                return 0;
+            case '进行中':
+                return 50;
+            case '已完成':
+                return 100;
+            default:
+                return 0;
+        }
+    };
+
     const [searchParams, setSearchParams] = useState<any>();
     const token = useSelector((state: { user: User }) => state.user.token);
     const username = useSelector((state: { user: User }) => state.user.username);
@@ -48,6 +69,14 @@ export default function TaskManagement() {
     const [drawerVisible, setDrawerVisible] = useState(false);
     const [progressList, setProgressList] = useState<TaskProgress[]>([]);
     const [attachmentsList, setAttachmentsList] = useState<any[]>([]);
+    const [statusRemark, setStatusRemark] = useState<string>('');
+    const [updatingStatus, setUpdatingStatus] = useState<boolean>(false);
+    const [subTaskStatusRemark, setSubTaskStatusRemark] = useState<string>('');
+    const [updatingSubTaskStatus, setUpdatingSubTaskStatus] = useState<boolean>(false);
+    const [selectedSubTaskForStatus, setSelectedSubTaskForStatus] = useState<any>(null);
+    const [statusModalVisible, setStatusModalVisible] = useState(false);
+    const [currentStatus, setCurrentStatus] = useState('');
+    const [currentSubTask, setCurrentSubTask] = useState<any>(null);
 
     function openModal() {
         setModalOpen(true);
@@ -102,7 +131,7 @@ export default function TaskManagement() {
         },
         {
             title: "状态",
-            width: 120,
+            width: 180,
             dataIndex: ["mainTask", "status"],
             key: "status",
             filters: [
@@ -112,7 +141,21 @@ export default function TaskManagement() {
             ],
             onFilter: (value, record) => record.mainTask.status === value,
             render: (text) => (
-                <Badge color={statusColorMap[text] || 'default'} text={text} />
+                <Space direction="vertical" style={{ width: '100%' }}>
+                    <Space>
+                        {statusIconMap[text]}
+                        <Badge color={statusColorMap[text] || 'default'} text={text} />
+                    </Space>
+                    <Progress 
+                        percent={getStatusProgress(text)} 
+                        size="small" 
+                        status={text === '已完成' ? 'success' : text === '进行中' ? 'active' : 'normal'}
+                        strokeColor={{
+                            '0%': '#108ee9',
+                            '100%': '#87d068',
+                        }}
+                    />
+                </Space>
             ),
         },
         {
@@ -344,6 +387,328 @@ export default function TaskManagement() {
         }
     };
 
+    const getTimelineIcon = (status: string) => {
+        switch (status) {
+            case '待处理':
+                return <ClockCircleOutlined style={{ color: '#8c8c8c' }} />;
+            case '进行中':
+                return <SyncOutlined spin style={{ color: '#1890ff' }} />;
+            case '已完成':
+                return <CheckCircleOutlined style={{ color: '#52c41a' }} />;
+            default:
+                return null;
+        }
+    };
+
+    // 修改主任务状态更新处理函数
+    const handleStatusUpdate = async (newStatus: string) => {
+        if (!selectedTask) return;
+        
+        setUpdatingStatus(true);
+        try {
+            const mark = `${username}将任务状态更新为${newStatus}${statusRemark ? `，备注：${statusRemark}` : ''}`;
+            await post({
+                url: API_ADD_TASKS_PROGRESS,
+                data: {
+                    main_id: selectedTask.taskId,
+                    mark,
+                    username,
+                    status: newStatus
+                },
+                token
+            });
+            
+            message.success('状态更新成功');
+            setStatusRemark('');
+            refresh();
+        } catch (error) {
+            message.error('状态更新失败');
+            console.error('Failed to update status:', error);
+        } finally {
+            setUpdatingStatus(false);
+        }
+    };
+
+    // 修改主任务状态更新对话框
+    const showMainTaskStatusUpdateModal = (newStatus: string) => {
+        setCurrentSubTask(null);
+        setCurrentStatus(newStatus);
+        setStatusModalVisible(true);
+    };
+
+    // 修改主任务状态菜单项
+    const getMainTaskStatusMenuItems = (): MenuProps['items'] => [
+        {
+            key: '待处理',
+            label: (
+                <Space>
+                    <ClockCircleOutlined style={{ color: '#8c8c8c' }} />
+                    待处理
+                </Space>
+            ),
+            onClick: () => showMainTaskStatusUpdateModal('待处理')
+        },
+        {
+            key: '进行中',
+            label: (
+                <Space>
+                    <SyncOutlined style={{ color: '#1890ff' }} />
+                    进行中
+                </Space>
+            ),
+            onClick: () => showMainTaskStatusUpdateModal('进行中')
+        },
+        {
+            key: '已完成',
+            label: (
+                <Space>
+                    <CheckCircleOutlined style={{ color: '#52c41a' }} />
+                    已完成
+                </Space>
+            ),
+            onClick: () => showMainTaskStatusUpdateModal('已完成')
+        }
+    ];
+
+    const handleSubTaskStatusUpdate = async (subTaskId: string, newStatus: string) => {
+        setUpdatingSubTaskStatus(true);
+        try {
+            const mark = `${username}将子任务状态更新为${newStatus}${subTaskStatusRemark ? `，备注：${subTaskStatusRemark}` : ''}`;
+            await post({
+                url: API_ADD_TASKS_PROGRESS,
+                data: {
+                    main_id: selectedTask.taskId,
+                    sub_id: subTaskId,
+                    mark,
+                    username,
+                    status: newStatus
+                },
+                token
+            });
+            
+            message.success('状态更新成功');
+            setSubTaskStatusRemark('');
+            setSelectedSubTaskForStatus(null);
+            refresh();
+        } catch (error) {
+            message.error('状态更新失败');
+            console.error('Failed to update status:', error);
+        } finally {
+            setUpdatingSubTaskStatus(false);
+        }
+    };
+
+    const showStatusUpdateModal = (subTask: any, newStatus: string) => {
+        setCurrentSubTask(subTask);
+        setCurrentStatus(newStatus);
+        setStatusModalVisible(true);
+    };
+
+    const handleModalOk = () => {
+        if (currentSubTask) {
+            handleSubTaskStatusUpdate(currentSubTask.subTaskId, currentStatus);
+        } else {
+            handleStatusUpdate(currentStatus);
+        }
+        setStatusModalVisible(false);
+        setSubTaskStatusRemark('');
+        setStatusRemark('');
+        setCurrentSubTask(null);
+    };
+
+    const handleModalCancel = () => {
+        setStatusModalVisible(false);
+        setSubTaskStatusRemark('');
+        setStatusRemark('');
+        setCurrentSubTask(null);
+    };
+
+    const getStatusMenuItems = (subTask: any): MenuProps['items'] => [
+        {
+            key: '待处理',
+            label: (
+                <Space>
+                    <ClockCircleOutlined style={{ color: '#8c8c8c' }} />
+                    待处理
+                </Space>
+            ),
+            onClick: () => {
+                setSelectedSubTaskForStatus(subTask);
+                showStatusUpdateModal(subTask, '待处理');
+            }
+        },
+        {
+            key: '进行中',
+            label: (
+                <Space>
+                    <SyncOutlined style={{ color: '#1890ff' }} />
+                    进行中
+                </Space>
+            ),
+            onClick: () => {
+                setSelectedSubTaskForStatus(subTask);
+                showStatusUpdateModal(subTask, '进行中');
+            }
+        },
+        {
+            key: '已完成',
+            label: (
+                <Space>
+                    <CheckCircleOutlined style={{ color: '#52c41a' }} />
+                    已完成
+                </Space>
+            ),
+            onClick: () => {
+                setSelectedSubTaskForStatus(subTask);
+                showStatusUpdateModal(subTask, '已完成');
+            }
+        }
+    ];
+
+    // 修改子任务表格列配置
+    const subTaskColumns = [
+        {
+            title: '任务详情',
+            dataIndex: 'description',
+            width: 200,
+            ellipsis: true,
+            render: (text: string) => (
+                <Tooltip title={text}>
+                    <span>{text}</span>
+                </Tooltip>
+            ),
+        },
+        {
+            title: '实施人',
+            width: 100,
+            dataIndex: 'implementPerson',
+            render: (text: string) => (
+                <Space>
+                    <Avatar size="small" src={`https://api.dicebear.com/7.x/notionists/svg?seed=${encodeURIComponent(text)}`} />
+                    <span>{text}</span>
+                </Space>
+            ),
+        },
+        {
+            title: '状态',
+            dataIndex: 'status',
+            width: 180,
+            render: (text: string, record: any) => (
+                <Space>
+                    {statusIconMap[text]}
+                    <Badge color={statusColorMap[text] || 'default'} text={text} />
+                    <Dropdown 
+                        menu={{ items: getStatusMenuItems(record) }} 
+                        trigger={['click']}
+                    >
+                        <Button 
+                            type="link" 
+                            size="small"
+                            loading={updatingSubTaskStatus && selectedSubTaskForStatus?.subTaskId === record.subTaskId}
+                        >
+                            更新状态
+                        </Button>
+                    </Dropdown>
+                </Space>
+            ),
+        },
+        {
+            title: "创建/更新时间",
+            width: 190,
+            key: "timeInfo",
+            render: (_, subTasks) => (
+                <div>
+                    <Tag color="orange" style={{ marginBottom: 4 }} bordered={false}>
+                        创建: {dayjs(subTasks.createdAt).format('YYYY-MM-DD HH:mm:ss')}
+                    </Tag>
+                    <br />
+                    <Tag color="blue" bordered={false}>
+                        更新: {dayjs(subTasks.updatedAt).format('YYYY-MM-DD HH:mm:ss')}
+                    </Tag>
+                </div>
+            ),
+        },
+        {
+            title: '备注',
+            width: 160,
+            dataIndex: 'remark',
+            render: (text: string) => text || '--',
+        },
+        {
+            title: '附件',
+            dataIndex: 'attachments',
+            width: 200,
+            render: (_, record) => {
+                const taskAttachments = attachmentsList.filter(
+                    (attachment: { subTaskId: string }) => attachment.subTaskId === record.subTaskId
+                );
+                return taskAttachments.length > 0 ? (
+                    <Space size="small">
+                        {taskAttachments.map((file: { attachmentName: string; attachmentPath: string }, index: number) => (
+                            <Tooltip title={file.attachmentName} key={index}>
+                                <a
+                                    href={file.attachmentPath}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    download
+                                    onClick={() => handleFileDownload(file, record.subTaskId)}
+                                >
+                                    {getFileIcon(file.attachmentName)}
+                                </a>
+                            </Tooltip>
+                        ))}
+                    </Space>
+                ) : '--';
+            },
+        },
+        {
+            title: "操作",
+            fixed: "right",
+            width: 160,
+            className: "operation-column",
+            render: (_, record) => (
+                <Space size="middle">
+                    <Button
+                        size="small"
+                        type="link"
+                        onClick={() => {
+                            setModalType("editsub");
+                            openModal();
+                            setHandleItem({
+                                ...record,
+                                taskId: record.subTaskId.toString()
+                            });
+                        }}
+                    >
+                        编辑
+                    </Button>
+                    <Confirm
+                        confirmTitle="是否确认删除？"
+                        buttonText="删除"
+                        danger
+                        loading={loadings[record.subTaskId]}
+                        onConfirm={() => {
+                            deleteTemplate(record.subTaskId, true);
+                        }}
+                    />
+                </Space>
+            ),
+        },
+    ];
+
+    const getTimelineColor = (status: string) => {
+        switch (status) {
+            case '待处理':
+                return 'gray';
+            case '进行中':
+                return 'blue';
+            case '已完成':
+                return 'green';
+            default:
+                return 'default';
+        }
+    };
+
     return (
         <>
             { }
@@ -398,7 +763,7 @@ export default function TaskManagement() {
                             <Card title="主任务详情" bordered={false}>
                                 {/* 第一行 */}
                                 <Row justify="space-between" align="middle" style={{ marginBottom: 30 }}>
-                                    <Col span={16}>
+                                    <Col span={18}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                                             {/* 任务描述 */}
                                             <Tooltip title={selectedTask.description}>
@@ -413,10 +778,36 @@ export default function TaskManagement() {
                                             </Typography.Text>
 
                                             {/* 状态 */}
-                                            <Badge color={statusColorMap[selectedTask.status] || 'default'} text={selectedTask.status} />
+                                            <Space direction="vertical" size="small" style={{ width: 180 }}>
+                                                <Space>
+                                                    {statusIconMap[selectedTask.status]}
+                                                    <Badge color={statusColorMap[selectedTask.status] || 'default'} text={selectedTask.status} />
+                                                    <Dropdown 
+                                                        menu={{ items: getMainTaskStatusMenuItems() }} 
+                                                        trigger={['click']}
+                                                    >
+                                                        <Button 
+                                                            type="link" 
+                                                            size="small"
+                                                            loading={updatingStatus}
+                                                        >
+                                                            更新状态
+                                                        </Button>
+                                                    </Dropdown>
+                                                </Space>
+                                                <Progress 
+                                                    percent={getStatusProgress(selectedTask.status)} 
+                                                    size="small" 
+                                                    status={selectedTask.status === '已完成' ? 'success' : selectedTask.status === '进行中' ? 'active' : 'normal'}
+                                                    strokeColor={{
+                                                        '0%': '#108ee9',
+                                                        '100%': '#87d068',
+                                                    }}
+                                                />
+                                            </Space>
                                         </div>
                                     </Col>
-                                    <Col>
+                                    <Col span={6} style={{ textAlign: 'right' }}>
                                         <Space>
                                             <Button onClick={() => {
                                                 // 刷新主任务数据
@@ -458,7 +849,7 @@ export default function TaskManagement() {
                                     <Col>
                                         对接人：{selectedTask.implementPerson}
                                     </Col>
-                                    <Col style={{ marginLeft: 'auto' }}>
+                                    <Col>
                                         <Space>
                                             <span>附件：</span>
                                             {attachmentsList
@@ -493,199 +884,76 @@ export default function TaskManagement() {
                                         style: { cursor: 'pointer' }
                                     })}
                                     rowClassName={(record) => record.subTaskId === selectedSubTask?.subTaskId ? 'ant-table-row-selected' : ''}
-                                    columns={[
-                                        {
-                                            title: '任务详情',
-                                            dataIndex: 'description',
-                                            width: 200,
-                                            ellipsis: true,
-                                            render: (text: string) => (
-                                                <Tooltip title={text}>
-                                                    <span>{text}</span>
-                                                </Tooltip>
-                                            ),
-                                        },
-                                        {
-                                            title: '实施人',
-                                            width: 100,
-                                            dataIndex: 'implementPerson',
-                                            render: (text: string) => (
-                                                <Space>
-                                                    <Avatar size="small" src={`https://api.dicebear.com/7.x/notionists/svg?seed=${encodeURIComponent(text)}`} />
-                                                    <span>{text}</span>
-                                                </Space>
-                                            ),
-                                        },
-                                        {
-                                            title: '状态',
-                                            dataIndex: 'status',
-                                            width: 90,
-                                            render: (text: string) => (
-                                                <Badge color={statusColorMap[text] || 'default'} text={text} />
-                                            ),
-                                        },
-                                        {
-                                            title: "创建/更新时间",
-                                            width: 190,
-                                            key: "timeInfo",
-                                            render: (_, subTasks) => (
-                                                <div>
-                                                    <Tag color="orange" style={{ marginBottom: 4 }} bordered={false}>
-                                                        创建: {dayjs(subTasks.createdAt).format('YYYY-MM-DD HH:mm:ss')}
-                                                    </Tag>
-                                                    <br />
-                                                    <Tag color="blue" bordered={false}>
-                                                        更新: {dayjs(subTasks.updatedAt).format('YYYY-MM-DD HH:mm:ss')}
-                                                    </Tag>
-                                                </div>
-                                            ),
-                                        },
-                                        {
-                                            title: '备注',
-                                            width: 160,
-                                            dataIndex: 'remark',
-                                            render: (text: string) => text || '--',
-                                        },
-                                        {
-                                            title: '附件',
-                                            dataIndex: 'attachments',
-                                            width: 200,
-                                            render: (_, record) => {
-                                                const taskAttachments = attachmentsList.filter(
-                                                    (attachment: { subTaskId: string }) => attachment.subTaskId === record.subTaskId
-                                                );
-                                                return taskAttachments.length > 0 ? (
-                                                    <Space size="small">
-                                                        {taskAttachments.map((file: { attachmentName: string; attachmentPath: string }, index: number) => (
-                                                            <Tooltip title={file.attachmentName} key={index}>
-                                                                <a
-                                                                    href={file.attachmentPath}
-                                                                    target="_blank"
-                                                                    rel="noopener noreferrer"
-                                                                    download
-                                                                    onClick={() => handleFileDownload(file, record.subTaskId)}
-                                                                >
-                                                                    {getFileIcon(file.attachmentName)}
-                                                                </a>
-                                                            </Tooltip>
-                                                        ))}
-                                                    </Space>
-                                                ) : '--';
-                                            },
-                                        },
-                                        {
-                                            title: "操作",
-                                            fixed: "right",
-                                            width: 160,
-                                            className: "operation-column",
-                                            render: (_, record) => (
-                                                <Space size="middle">
-                                                    <Button
-                                                        size="small"
-                                                        type="link"
-                                                        onClick={() => {
-                                                            setModalType("editsub");
-                                                            openModal();
-                                                            setHandleItem({
-                                                                ...record,
-                                                                taskId: record.subTaskId.toString()
-                                                            });
-                                                        }}
-                                                    >
-                                                        编辑
-                                                    </Button>
-                                                    <Confirm
-                                                        confirmTitle="是否确认删除？"
-                                                        buttonText="删除"
-                                                        danger
-                                                        loading={loadings[record.subTaskId]}
-                                                        onConfirm={() => {
-                                                            deleteTemplate(record.subTaskId, true);
-                                                        }}
-                                                    />
-                                                </Space>
-                                            ),
-                                
-                                        },
-                                    ]}
+                                    columns={subTaskColumns}
                                 />
                             </Card>
                         </Col>
 
                         <Col span={24}>
-                            <Card title="任务进度" bordered={false}>
-                                <Table
-                                    dataSource={selectedSubTask 
-                                        ? progressList.filter(p => p.subTaskId === selectedSubTask.subTaskId)
-                                        : progressList}
-                                    rowKey="progressId"
-                                    pagination={{pageSize: 10}}
-                                    columns={[
-                                        {
-                                            title: "操作时间",
-                                            width: 180,
-                                            key: "timeInfo",
-                                            render: (_, record) => (
-                                                <div>
-                                                    <Tag color="orange" style={{ marginBottom: 4 }} bordered={false}>
-                                                        {dayjs(record.createdAt).format('YYYY-MM-DD HH:mm:ss')}
-                                                    </Tag>
-                                                </div>
+                            <Card 
+                                title={
+                                    <Space>
+                                        <span>任务进度</span>
+                                        <Tag color="blue">
+                                            共 {selectedSubTask 
+                                                ? progressList.filter(p => p.subTaskId === selectedSubTask.subTaskId).length 
+                                                : progressList.length} 条记录
+                                        </Tag>
+                                    </Space>
+                                } 
+                                bordered={false}
+                            >
+                                <Timeline
+                                    mode="left"
+                                    items={progressList
+                                        .filter(p => selectedSubTask ? p.subTaskId === selectedSubTask.subTaskId : true)
+                                        .map((progress, index) => ({
+                                            color: getTimelineColor(progress.status),
+                                            dot: getTimelineIcon(progress.status),
+                                            children: (
+                                                <Card 
+                                                    size="small" 
+                                                    style={{ marginBottom: 16 }}
+                                                    bodyStyle={{ padding: '12px' }}
+                                                >
+                                                    <Space direction="vertical" style={{ width: '100%' }}>
+                                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                            <Space>
+                                                                <Avatar 
+                                                                    size="small" 
+                                                                    src={`https://api.dicebear.com/7.x/notionists/svg?seed=${encodeURIComponent(progress.implementPerson)}`} 
+                                                                />
+                                                                <span style={{ fontWeight: 500 }}>{progress.implementPerson}</span>
+                                                            </Space>
+                                                            <Tag color={getTimelineColor(progress.status)}>
+                                                                {progress.status}
+                                                            </Tag>
+                                                        </div>
+                                                        <div style={{ color: '#666', fontSize: '12px' }}>
+                                                            {dayjs(progress.createdAt).format('YYYY-MM-DD HH:mm:ss')}
+                                                        </div>
+                                                        {progress.remark && (
+                                                            <div style={{ 
+                                                                background: '#f5f5f5', 
+                                                                padding: '8px 12px', 
+                                                                borderRadius: '4px',
+                                                                marginTop: '8px'
+                                                            }}>
+                                                                {progress.remark}
+                                                            </div>
+                                                        )}
+                                                        {progress.subTaskId && (
+                                                            <div style={{ marginTop: '8px' }}>
+                                                                <Tag color="green">子任务</Tag>
+                                                                <span style={{ marginLeft: 8 }}>
+                                                                    {subTasks.find(st => st.subTaskId === progress.subTaskId)?.description || '--'}
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                    </Space>
+                                                </Card>
                                             ),
-                                        },
-                                        {
-                                            title: '任务描述',
-                                            width: 200,
-                                            ellipsis: true,
-                                            render: (_, record) => {
-                                                if (record.subTaskId) {
-                                                    const subTask = subTasks.find(st => st.subTaskId === record.subTaskId);
-                                                    return (
-                                                        <Tooltip title={subTask?.description || '--'}>
-                                                            <Badge color="green" text={subTask?.description || '--'} />
-                                                        </Tooltip>
-                                                    );
-                                                } else {
-                                                    return (
-                                                        <Tooltip title={selectedTask?.description || '--'}>
-                                                            <Badge color="red" text={selectedTask?.description || '--'} />
-                                                        </Tooltip>
-                                                    );
-                                                }
-                                            }
-                                        },
-                                        {
-                                            title: '操作者',
-                                            width: 100,
-                                            dataIndex: 'implementPerson',
-                                            render: (text: string) => (
-                                                <Space>
-                                                    <Avatar size="small" src={`https://api.dicebear.com/7.x/notionists/svg?seed=${encodeURIComponent(text)}`} />
-                                                    <span>{text}</span>
-                                                </Space>
-                                            ),
-                                        },
-                                        {
-                                            title: '状态',
-                                            dataIndex: 'status',
-                                            width: 160,
-                                            render: (text: string) => (
-                                                <Badge color={statusColorMap[text] || 'default'} text={text} />
-                                            ),
-                                        },
-                                        {
-                                            title: '备注',
-                                            dataIndex: 'remark',
-                                            width: 190,
-                                            ellipsis: true,
-                                            render: (text: string) => (
-                                                <Tooltip title={text}>
-                                                    <span>{text || '--'}</span>
-                                                </Tooltip>
-                                            ),
-                                        }
-
-                                    ]}
+                                        }))}
                                 />
                             </Card>
                         </Col>
@@ -725,6 +993,35 @@ export default function TaskManagement() {
                     selectedSubTask={selectedSubTask}
                     setSelectedSubTask={setSelectedSubTask}
                 />
+            </Modal>
+
+            <Modal
+                title="更新状态"
+                open={statusModalVisible}
+                onOk={handleModalOk}
+                onCancel={handleModalCancel}
+                centered
+                okText="确定"
+                cancelText="取消"
+                okButtonProps={{
+                    type: 'primary',
+                    style: { backgroundColor: '#1890ff' }
+                }}
+            >
+                <div style={{ marginTop: 16 }}>
+                    <Input
+                        placeholder="添加状态更新备注（可选）"
+                        value={currentSubTask ? subTaskStatusRemark : statusRemark}
+                        onChange={(e) => {
+                            if (currentSubTask) {
+                                setSubTaskStatusRemark(e.target.value);
+                            } else {
+                                setStatusRemark(e.target.value);
+                            }
+                        }}
+                        style={{ width: '100%' }}
+                    />
+                </div>
             </Modal>
         </>
     );
